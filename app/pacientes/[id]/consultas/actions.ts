@@ -12,13 +12,21 @@ export async function crearConsulta(pacienteId: string, data: {
   peso?: number
   talla?: number
   observaciones?: string
-}) {
-  await prisma.consulta.create({
+}, turnoId?: string) {
+  const consulta = await prisma.consulta.create({
     data: {
       ...data,
       pacienteId,
     },
   })
+
+  if (turnoId) {
+    await prisma.turno.update({
+      where: { id: turnoId },
+      data: { estado: 'ATENDIDO', consultaId: consulta.id },
+    })
+    revalidatePath('/agenda')
+  }
 
   revalidatePath(`/pacientes/${pacienteId}`)
   redirect(`/pacientes/${pacienteId}`)
