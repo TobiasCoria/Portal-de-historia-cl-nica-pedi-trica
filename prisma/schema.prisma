@@ -1,0 +1,165 @@
+// schema.prisma
+// Portal de Historia Clínica Pediátrica
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Rol {
+  DOCTORA
+  SECRETARIA
+}
+
+enum Sexo {
+  MASCULINO
+  FEMENINO
+}
+
+model Usuario {
+  id            String   @id @default(uuid())
+  nombre        String
+  email         String   @unique
+  rol           Rol
+  creadoEn      DateTime @default(now())
+  activo        Boolean  @default(true)
+
+  consultasCreadas Consulta[]       @relation("CreadoPor")
+  logs             LogAuditoria[]
+}
+
+model Paciente {
+  id            String    @id @default(uuid())
+
+  // Paso 1 — Datos del paciente
+  nombre        String
+  apellido      String
+  dni           String    @unique
+  fechaNac      DateTime
+  sexo          Sexo?
+  fotoUrl       String?
+
+  // Paso 2 — Contacto y tutores
+  tutorNombre   String?
+  tutorDni      String?
+  telefono      String?
+  email         String?
+  direccion     String?
+  contactoEmergencia String?
+
+  // Paso 3 — Datos médicos iniciales
+  antecedentesFamiliares String?
+  alergias      String?
+  pesoNacer     Float?
+  tallaNacer    Float?
+  grupoSanguineo String?
+  observaciones String?
+
+  // Paso 4 — Obra social
+  obraSocial    String?
+  numeroAfiliado String?
+  plan          String?
+  particular    Boolean  @default(false)
+
+  // Control
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+  eliminadoEn   DateTime? // soft delete — nunca DELETE físico
+
+  consultas     Consulta[]
+  vacunas       VacunaAplicada[]
+  logs          LogAuditoria[]
+  documentos    Documento[]
+  turnos        Turno[]
+}
+
+model Consulta {
+  id            String   @id @default(uuid())
+  pacienteId    String
+  paciente      Paciente @relation(fields: [pacienteId], references: [id])
+
+  fecha         DateTime @default(now())
+  motivo        String
+  diagnostico   String?
+  tratamiento   String?
+  peso          Float?
+  talla         Float?
+  observaciones String?
+
+  creadoPorId   String?
+  creadoPor     Usuario? @relation("CreadoPor", fields: [creadoPorId], references: [id])
+  creadoEn      DateTime @default(now())
+  documentos    Documento[]
+  turno         Turno?
+}
+
+model VacunaAplicada {
+  id            String   @id @default(uuid())
+  pacienteId    String
+  paciente      Paciente @relation(fields: [pacienteId], references: [id])
+
+  nombre        String   // la doctora escribe el nombre de la vacuna
+  dosis         String?  // ej: "1era dosis", "refuerzo"
+  fechaAplicada DateTime?
+  fechaProgramada DateTime? // próxima dosis, para el calendario/recordatorios
+  observaciones String?
+  creadoEn      DateTime @default(now())
+}
+
+model Documento {
+  id          String    @id @default(uuid())
+  pacienteId  String
+  paciente    Paciente  @relation(fields: [pacienteId], references: [id])
+  consultaId  String?   // si tiene valor, pertenece a una consulta puntual; si no, es general del paciente
+  consulta    Consulta? @relation(fields: [consultaId], references: [id])
+
+  nombre      String   // nombre original del archivo
+  url         String   // path dentro del bucket de Supabase
+  tipo        String?  // mime type, ej: "application/pdf", "image/jpeg"
+  creadoEn    DateTime @default(now())
+}
+
+model LogAuditoria {
+  id            String   @id @default(uuid())
+  usuarioId     String
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id])
+  pacienteId    String?
+  paciente      Paciente? @relation(fields: [pacienteId], references: [id])
+
+  accion        String   // "crear_paciente", "editar_consulta", "eliminar_paciente", etc.
+  detalle       String?  // qué cambió, en texto o JSON
+  creadoEn      DateTime @default(now())
+}
+
+model Perfil {
+  id        String  @id @default(uuid())
+  email     String  @unique
+  nombre    String
+  color     String
+  avatarUrl String?
+  actualizadoEn DateTime @updatedAt
+}
+
+enum EstadoTurno {
+  PENDIENTE
+  ATENDIDO
+  CANCELADO
+}
+
+model Turno {
+  id            String      @id @default(uuid())
+  pacienteId    String
+  paciente      Paciente    @relation(fields: [pacienteId], references: [id])
+  fecha         DateTime
+  motivo        String?
+  estado        EstadoTurno @default(PENDIENTE)
+  consultaId    String?     @unique
+  consulta      Consulta?   @relation(fields: [consultaId], references: [id])
+  observaciones String?
+  creadoEn      DateTime    @default(now())
+}
