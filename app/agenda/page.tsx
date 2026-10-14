@@ -5,6 +5,9 @@ import Nav from '../components/nav'
 import Volver from '../components/volver'
 import BuscadorTurno from './buscador-turno'
 
+// La agenda depende de la fecha y de la sesión: nunca debe generarse en el build ni quedar cacheada
+export const dynamic = 'force-dynamic'
+
 export default async function AgendaPage() {
   const items = await obtenerAgendaProxima()
 
