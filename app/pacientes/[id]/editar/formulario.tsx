@@ -1,4 +1,5 @@
 'use client'
+import CambiosPendientes from '@/app/components/cambios-pendientes'
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -60,7 +61,9 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="card space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="card space-y-4 form-panel">
+      <CambiosPendientes />
+      <h2 className="form-section-title"><span>01</span>Datos del paciente</h2>
       <Campo label="Nombre" error={errors.nombre?.message}>
         <input {...register('nombre')} className="input" />
       </Campo>
@@ -83,6 +86,7 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
 
       <hr className="my-4 border-[#e3e7e2]" />
 
+      <h2 className="form-section-title"><span>02</span>Su familia y contacto</h2>
       <Campo label="Nombre del tutor"><input {...register('tutorNombre')} className="input" /></Campo>
       <Campo label="DNI del tutor"><input {...register('tutorDni')} className="input" /></Campo>
       <Campo label="Vínculo con el paciente"><input {...register('tutorVinculo')} className="input" /></Campo>
@@ -96,6 +100,7 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
       <hr className="my-4 border-[#e3e7e2]" />
 
       {clinico && <>
+      <h2 className="form-section-title"><span>03</span>Antecedentes y datos al nacer</h2>
       <Campo label="Antecedentes familiares">
         <textarea {...register('antecedentesFamiliares')} className="input" rows={3} />
       </Campo>
@@ -112,6 +117,7 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
       <hr className="my-4 border-[#e3e7e2]" />
 
       </>}
+      <h2 className="form-section-title"><span>04</span>Cobertura</h2>
       <Campo label="Obra social / prepaga"><input {...register('obraSocial')} className="input" /></Campo>
       <Campo label="Número de afiliado"><input {...register('numeroAfiliado')} className="input" /></Campo>
       <Campo label="Plan"><input {...register('plan')} className="input" /></Campo>
@@ -126,7 +132,7 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
         </div>
       )}
 
-      <div className="pt-4">
+      <div className="sticky-actions">
         <button type="submit" disabled={enviando} className="btn btn-primary disabled:opacity-50">
           <Check size={16} />
           {enviando ? 'Guardando...' : 'Guardar cambios'}
@@ -139,8 +145,7 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
 function Campo({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-[#1c2521]">{label}</label>
-      <div className="mt-1">{children}</div>
+      <label className="block text-sm font-medium text-[#1c2521]">{label}<span className="mt-1 block">{children}</span></label>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   )

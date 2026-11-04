@@ -1,3 +1,4 @@
+import PacienteContexto from '@/app/components/paciente-contexto'
 import { requireRole } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import { obtenerConsulta } from '../../lecturas'
@@ -21,8 +22,8 @@ export default async function EditarConsultaPage({
       <div className="mx-auto max-w-2xl">
         <Nav />
         <Volver href={`/pacientes/${id}`} />
-        <h1 className="mb-6 text-2xl">Editar consulta</h1>
-        <FormularioEdicionConsulta pacienteId={id} consulta={consulta} />
+        <h1 className="mb-7">Editar consulta</h1>
+        <div className="form-columns"><div className="form-panel"><FormularioEdicionConsulta pacienteId={id} consulta={consulta} /></div><PacienteContexto id={id} /></div>
       </div>
     </div>
   )

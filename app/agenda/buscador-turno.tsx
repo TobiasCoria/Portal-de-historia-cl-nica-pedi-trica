@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CalendarPlus, Search } from 'lucide-react'
 import { listarPacientes } from '../pacientes/actions'
@@ -18,17 +18,21 @@ export default function BuscadorTurno() {
   const [resultados, setResultados] = useState<Paciente[]>([])
   const [buscando, setBuscando] = useState(false)
   const router = useRouter()
+  const request = useRef(0)
+  const timeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (timeout.current) clearTimeout(timeout.current); request.current++ }, [])
 
-  async function onChange(valor: string) {
+  function onChange(valor: string) {
     setQuery(valor)
-    if (valor.trim().length < 2) {
-      setResultados([])
-      return
-    }
+    const actual = ++request.current
+    if (timeout.current) clearTimeout(timeout.current)
+    if (valor.trim().length < 2) { setResultados([]); setBuscando(false); return }
     setBuscando(true)
-    const pacientes = await listarPacientes(valor)
-    setResultados(pacientes.slice(0, 6))
-    setBuscando(false)
+    timeout.current = setTimeout(async () => {
+      try { const pacientes = await listarPacientes(valor.trim()); if (request.current === actual) setResultados(pacientes) }
+      catch { if (request.current === actual) setResultados([]) }
+      finally { if (request.current === actual) setBuscando(false) }
+    }, 250)
   }
 
   function elegirPaciente(id: string) {
@@ -37,7 +41,7 @@ export default function BuscadorTurno() {
 
   if (!abierto) {
     return (
-      <button onClick={() => setAbierto(true)} className="btn btn-outline mb-6">
+      <button onClick={() => setAbierto(true)} className="btn btn-primary">
         <CalendarPlus size={16} />
         Agendar turno
       </button>
@@ -45,7 +49,7 @@ export default function BuscadorTurno() {
   }
 
   return (
-    <div className="mb-6">
+    <div className="relative min-w-60">
       <div className="relative max-w-sm">
         <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa5a0]" />
         <input
@@ -59,7 +63,7 @@ export default function BuscadorTurno() {
       </div>
 
       {query.trim().length >= 2 && (
-        <div className="card mt-2 max-w-sm p-1">
+        <div className="card absolute right-0 z-20 mt-2 w-full min-w-64 p-1 shadow-lg">
           {buscando ? (
             <p className="p-2 text-sm text-[#5b6b64]">Buscando...</p>
           ) : resultados.length === 0 ? (
@@ -80,7 +84,7 @@ export default function BuscadorTurno() {
       )}
 
       <button
-        onClick={() => { setAbierto(false); setQuery(''); setResultados([]) }}
+        onClick={() => { request.current++; if (timeout.current) clearTimeout(timeout.current); setAbierto(false); setQuery(''); setResultados([]) }}
         className="btn-link mt-2 text-xs"
       >
         Cancelar

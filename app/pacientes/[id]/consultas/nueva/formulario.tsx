@@ -1,4 +1,5 @@
 'use client'
+import CambiosPendientes from '@/app/components/cambios-pendientes'
 
 import { useState } from 'react'
 import { Check } from 'lucide-react'
@@ -28,36 +29,37 @@ export default function FormularioConsulta({ pacienteId, turnoId }: { pacienteId
 
   return (
     <form action={onSubmit} className="card space-y-4">
+      <CambiosPendientes />
       {turnoId && (
         <p className="rounded border border-[#e3e7e2] bg-[#fafbfa] p-3 text-sm text-[#5b6b64]">
           Esta consulta va a marcar el turno correspondiente como <strong>Atendido</strong>.
         </p>
       )}
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Motivo de consulta *</label>
-        <input name="motivo" required className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Motivo de consulta *
+        <input name="motivo" required className="input mt-1" /></label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Diagnóstico</label>
-        <textarea name="diagnostico" rows={2} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Diagnóstico
+        <textarea name="diagnostico" rows={2} className="input mt-1" /></label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Tratamiento</label>
-        <textarea name="tratamiento" rows={2} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Tratamiento
+        <textarea name="tratamiento" rows={2} className="input mt-1" /></label>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[#1c2521]">Peso (kg)</label>
-          <input name="peso" type="number" step="0.01" className="input mt-1" />
+          <label className="block text-sm font-medium text-[#1c2521]">Peso (kg)
+          <input name="peso" type="number" step="0.01" className="input mt-1" /></label>
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#1c2521]">Talla (cm)</label>
-          <input name="talla" type="number" step="0.1" className="input mt-1" />
+          <label className="block text-sm font-medium text-[#1c2521]">Talla (cm)
+          <input name="talla" type="number" step="0.1" className="input mt-1" /></label>
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Observaciones</label>
-        <textarea name="observaciones" rows={2} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Observaciones
+        <textarea name="observaciones" rows={2} className="input mt-1" /></label>
       </div>
 
       {error && <p role="alert" className="form-error">{error}</p>}

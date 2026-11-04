@@ -1,4 +1,5 @@
 'use client'
+import CambiosPendientes from '@/app/components/cambios-pendientes'
 import { inputFechaHora } from '@/lib/fechas'
 
 import { useState } from 'react'
@@ -6,11 +7,6 @@ import { Check } from 'lucide-react'
 import { actualizarTurno } from '../../actions'
 import type { Turno } from '@prisma/client'
 
-function formatoFechaHora(fecha: Date): string {
-  const d = new Date(fecha)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
 
 export default function FormularioEdicionTurno({
   pacienteId,
@@ -44,18 +40,19 @@ export default function FormularioEdicionTurno({
 
   return (
     <form action={onSubmit} className="card space-y-4">
+      <CambiosPendientes />
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Fecha y hora *</label>
-        <input name="fecha" type="datetime-local" required defaultValue={formatoFechaHora(turno.fecha)} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Fecha y hora *
+        <input name="fecha" type="datetime-local" required defaultValue={inputFechaHora(turno.fecha)} className="input mt-1" /></label>
       </div>
-      <div><label className="block text-sm font-medium">Duración</label><select name="duracion" className="input mt-1" defaultValue={30}><option value={15}>15 minutos</option><option value={30}>30 minutos</option><option value={45}>45 minutos</option><option value={60}>60 minutos</option></select></div>
+      <div><label className="block text-sm font-medium">Duración<select name="duracion" className="input mt-1" defaultValue={turno.duracion}><option value={15}>15 minutos</option><option value={30}>30 minutos</option><option value={45}>45 minutos</option><option value={60}>60 minutos</option></select></label></div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Motivo</label>
-        <input name="motivo" defaultValue={turno.motivo ?? ''} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Motivo
+        <input name="motivo" defaultValue={turno.motivo ?? ''} className="input mt-1" /></label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Observaciones</label>
-        <textarea name="observaciones" rows={2} defaultValue={turno.observaciones ?? ''} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Observaciones
+        <textarea name="observaciones" rows={2} defaultValue={turno.observaciones ?? ''} className="input mt-1" /></label>
       </div>
 
       {error && (

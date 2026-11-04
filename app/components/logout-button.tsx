@@ -15,9 +15,9 @@ export default function LogoutButton() {
   }
 
   return (
-    <button onClick={cerrarSesion} className="flex items-center gap-1.5 text-sm font-medium text-[#5b6b64] hover:text-[#c4433a]">
+    <button onClick={cerrarSesion} aria-label="Cerrar sesión" title="Cerrar sesión" className="text-[#9db6ba] hover:text-white">
       <LogOut size={16} />
-      Salir
+      <span className="screen-reader">Salir</span>
     </button>
   )
 }

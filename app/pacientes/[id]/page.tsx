@@ -1,243 +1,49 @@
-import { pacienteAdministrativo, camposClinicosVacios } from '@/lib/paciente-administrativo'
-import { requireUser } from '@/lib/auth'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Pencil, Stethoscope, Syringe, Trash2, CalendarPlus, CalendarCheck2 } from 'lucide-react'
+import { Plus, Pencil, CalendarPlus, ArrowUpRight, FileDown, ShieldCheck, HeartPulse, Sprout } from 'lucide-react'
+import { requireUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import Documentos from '@/app/components/documentos'
+import { obtenerPaciente } from '../lecturas'
+import { edad, fechaCorta, horaLocal } from '@/lib/fechas'
 import Nav from '@/app/components/nav'
 import Volver from '@/app/components/volver'
+import Documentos from '@/app/components/documentos'
 import ConfirmarEliminar from '@/app/components/confirmar-eliminar'
+import TurnoFila from '@/app/components/turno-fila'
 import { eliminarConsulta } from './consultas/actions'
 import { eliminarVacuna } from './vacunas/actions'
-import { cancelarTurno } from './turnos/actions'
+import { eliminarPaciente } from '../actions'
 
-async function obtenerPacienteConConsultas(id: string) {
-  const user = await requireUser()
-  if (user.rol === 'SECRETARIA') {
-    const paciente = await prisma.paciente.findUnique({ where: { id, eliminadoEn: null }, select: { ...pacienteAdministrativo, turnos: { orderBy: { fecha: 'asc' } } } })
-    return paciente ? { ...paciente, ...camposClinicosVacios, consultas: [], vacunas: [], documentos: [] } : null
-  }
-  return prisma.paciente.findUnique({
-    where: { id, eliminadoEn: null },
-    include: {
-      consultas: { where: { eliminadoEn: null }, orderBy: { fecha: 'desc' }, include: { documentos: { where: { eliminadoEn: null } } } },
-      vacunas: { where: { eliminadoEn: null }, orderBy: { fechaProgramada: 'asc' } },
-      turnos: { orderBy: { fecha: 'asc' } },
-      documentos: { where: { consultaId: null, eliminadoEn: null }, orderBy: { creadoEn: 'desc' } },
-    },
-  })
-}
-
-export default async function FichaPacientePage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const user = await requireUser()
-  const { id } = await params
-  const paciente = await obtenerPacienteConConsultas(id)
-
+export default async function FichaPacientePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ seccion?: string; pagina?: string }> }) {
+  const user = await requireUser(), doctora = user.rol === 'DOCTORA'
+  const { id } = await params, query = await searchParams
+  const paciente = await obtenerPaciente(id)
   if (!paciente) notFound()
-
-  const turnosPendientes = paciente.turnos.filter((t) => t.estado === 'PENDIENTE')
-
-  return (
-    <div className="min-h-screen p-8">
-      <div className="mx-auto max-w-3xl">
-        <Nav />
-        <Volver href="/pacientes" />
-
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl">{paciente.nombre} {paciente.apellido}</h1>
-            <p className="text-sm text-[#5b6b64]">
-              DNI: {paciente.dni} · Nac.: {new Date(paciente.fechaNac).toLocaleDateString('es-AR')}
-            </p>
-            {paciente.alergias && (
-              <p className="mt-1 text-sm font-medium" style={{ color: '#D6497B' }}>
-                ⚠ Alergias: {paciente.alergias}
-              </p>
-            )}
-          </div>
-          <div className="flex gap-3">
-            <Link href={`/pacientes/${id}/editar`} className="btn btn-outline">
-              <Pencil size={15} />
-              Editar datos
-            </Link>
-            <Link href={`/pacientes/${id}/turnos/nuevo`} className="btn btn-outline">
-              <CalendarPlus size={15} />
-              Agendar turno
-            </Link>
-            {user.rol === 'DOCTORA' && <Link href={`/pacientes/${id}/consultas/nueva`} className="btn btn-primary">
-              <Stethoscope size={15} />
-              Nueva consulta
-            </Link>}
-          </div>
-        </div>
-
-        <section className="card mb-6 text-sm">
-          <h2 className="mb-2 text-lg">Consentimiento del tutor</h2>
-          <p>Tutor: {paciente.tutorNombre || 'Sin registrar'} · Vínculo: {paciente.tutorVinculo || 'Sin registrar'}</p>
-          {paciente.consentimientoAt ? <p>Registrado el {paciente.consentimientoAt.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })} por {paciente.consentimientoPor}.</p> : <p className="text-[#c99a2e]">Sin consentimiento registrado. La ficha es anterior a este control.</p>}
-          <p className="mt-2 text-[#5b6b64]">Podés adjuntar la copia firmada en Documentos.</p>
-        </section>
-
-        <div className="mb-10">
-          <h2 className="mb-3 text-lg font-medium">Turnos</h2>
-          {turnosPendientes.length === 0 ? (
-            <p className="text-sm text-[#5b6b64]">Sin turnos pendientes.</p>
-          ) : (
-            <div className="space-y-2">
-              {turnosPendientes.map((t) => {
-                const vencido = new Date(t.fecha) < new Date()
-                return (
-                  <div key={t.id} className={`card flex items-center justify-between text-sm ${vencido ? 'card-alerta-roja' : ''}`}>
-                    <div>
-                      <span className="font-medium">
-                        {new Date(t.fecha).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      {t.motivo && <span className="text-[#5b6b64]"> · {t.motivo}</span>}
-                    </div>
-                    <div className="flex gap-2">
-                      {user.rol === 'DOCTORA' && <Link href={`/pacientes/${id}/consultas/nueva?turnoId=${t.id}`}  className="action-btn">
-                        <CalendarCheck2 size={13} />
-                        Atender
-                      </Link>}
-                      <Link href={`/pacientes/${id}/turnos/${t.id}/editar`} className="action-btn">
-                        <Pencil size={13} />
-                        Editar
-                      </Link>
-                      <ConfirmarEliminar mensaje="¿Cancelar este turno?">
-                        <form action={cancelarTurno.bind(null, id, t.id)}>
-                          <button type="submit" className="action-btn-danger">
-                            <Trash2 size={13} />
-                            Cancelar
-                          </button>
-                        </form>
-                      </ConfirmarEliminar>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {user.rol === 'DOCTORA' && <>
-        <div className="mb-10">
-          <h2 className="mb-3 text-lg font-medium">Documentos</h2>
-          <div className="card">
-            <Documentos pacienteId={id} documentos={paciente.documentos} />
-          </div>
-        </div>
-
-        <div className="mb-10">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-medium">Vacunas</h2>
-            <Link href={`/pacientes/${id}/vacunas/nueva`} className="btn-link">
-              <Syringe size={15} />
-              Registrar vacuna
-            </Link>
-          </div>
-
-          {paciente.vacunas.length === 0 ? (
-            <p className="text-sm text-[#5b6b64]">Sin vacunas registradas.</p>
-          ) : (
-            <div className="space-y-2">
-              {paciente.vacunas.map((v) => {
-                const pendiente = v.fechaProgramada && !v.fechaAplicada
-                const vencida = pendiente && new Date(v.fechaProgramada!) < new Date()
-                return (
-                  <div
-                    key={v.id}
-                    className={`card flex items-center justify-between text-sm ${
-                      vencida ? 'card-alerta-roja' : ''
-                    }`}
-                  >
-                    <div>
-                      <span className="font-medium">{v.nombre}</span>
-                      {v.dosis && <span className="text-[#5b6b64]"> · {v.dosis}</span>}
-                      {v.fechaAplicada && (
-                        <span className="ml-2 text-[#5b6b64]">
-                          Aplicada: {new Date(v.fechaAplicada).toLocaleDateString('es-AR')}
-                        </span>
-                      )}
-                      {pendiente && (
-                        <span className={`ml-2 ${vencida ? 'font-medium text-red-600' : 'text-[#5b6b64]'}`}>
-                          {vencida ? '⚠ Vencida' : 'Programada'}: {new Date(v.fechaProgramada!).toLocaleDateString('es-AR')}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Link href={`/pacientes/${id}/vacunas/${v.id}/editar`} className="action-btn">
-                        <Pencil size={13} />
-                        Editar
-                      </Link>
-                      <ConfirmarEliminar mensaje={`¿Eliminar el registro de ${v.nombre}?`}>
-                        <form action={eliminarVacuna.bind(null, id, v.id)}>
-                          <button type="submit" className="action-btn-danger">
-                            <Trash2 size={13} />
-                            Eliminar
-                          </button>
-                        </form>
-                      </ConfirmarEliminar>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        <h2 className="mb-3 text-lg font-medium">Historia clínica</h2>
-
-        {paciente.consultas.length === 0 ? (
-          <div className="card text-center text-[#5b6b64]">
-            Todavía no hay consultas cargadas para este paciente.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {paciente.consultas.map((c) => (
-              <div key={c.id} className="card">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="font-medium">{new Date(c.fecha).toLocaleDateString('es-AR')}</span>
-                  <div className="flex items-center gap-3">
-                    {(c.peso || c.talla) && (
-                      <span className="text-sm text-[#5b6b64]">
-                        {c.peso ? `${c.peso} kg` : ''} {c.talla ? `· ${c.talla} cm` : ''}
-                      </span>
-                    )}
-                    <div className="flex gap-2">
-                      <Link href={`/pacientes/${id}/consultas/${c.id}/editar`} className="action-btn">
-                        <Pencil size={13} />
-                        Editar
-                      </Link>
-                      <ConfirmarEliminar mensaje="¿Ocultar esta consulta? El registro y sus documentos se conservan.">
-                        <form action={eliminarConsulta.bind(null, id, c.id)}>
-                          <button type="submit" className="action-btn-danger">
-                            <Trash2 size={13} />
-                            Eliminar
-                          </button>
-                        </form>
-                      </ConfirmarEliminar>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm"><strong>Motivo:</strong> {c.motivo}</p>
-                {c.diagnostico && <p className="text-sm"><strong>Diagnóstico:</strong> {c.diagnostico}</p>}
-                {c.tratamiento && <p className="text-sm"><strong>Tratamiento:</strong> {c.tratamiento}</p>}
-                {c.observaciones && <p className="mt-1 text-sm text-[#5b6b64]">{c.observaciones}</p>}
-
-                <div className="mt-3 border-t border-[#e3e7e2] pt-3">
-                  <Documentos pacienteId={id} consultaId={c.id} documentos={c.documentos} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        </>}
-      </div>
-    </div>
-  )
+  const permitidas = doctora ? ['resumen', 'consultas', 'vacunas', 'documentos', 'datos', 'turnos'] : ['resumen', 'datos', 'turnos']
+  const seccion = permitidas.includes(query.seccion || '') ? query.seccion! : 'resumen'
+  const pagina = Math.max(1, Math.min(10000, Number.parseInt(query.pagina || '1') || 1))
+  const [consultas, vacunas, documentos, turnos, totalConsultas] = await Promise.all([
+    doctora ? prisma.consulta.findMany({ where: { pacienteId: id, eliminadoEn: null }, orderBy: [{ fecha: 'desc' }, { id: 'desc' }], take: 12, skip: seccion === 'consultas' ? (pagina - 1) * 12 : 0, include: { documentos: { where: { eliminadoEn: null }, orderBy: { creadoEn: 'desc' } } } }) : Promise.resolve([]),
+    doctora ? prisma.vacunaAplicada.findMany({ where: { pacienteId: id, eliminadoEn: null }, orderBy: [{ fechaAplicada: 'desc' }, { fechaProgramada: 'asc' }] }) : Promise.resolve([]),
+    doctora ? prisma.documento.findMany({ where: { pacienteId: id, consultaId: null, eliminadoEn: null }, orderBy: { creadoEn: 'desc' } }) : Promise.resolve([]),
+    prisma.turno.findMany({ where: { pacienteId: id }, orderBy: { fecha: 'desc' }, include: { paciente: { select: { nombre: true, apellido: true, esDemo: true } } } }),
+    doctora ? prisma.consulta.count({ where: { pacienteId: id, eliminadoEn: null } }) : Promise.resolve(0),
+  ])
+  const pendientes = turnos.filter(t => t.estado === 'PENDIENTE').sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
+  const etiqueta: Record<string, string> = { resumen: 'Resumen', consultas: 'Consultas', vacunas: 'Vacunas', documentos: 'Documentos', datos: 'Datos del paciente', turnos: 'Turnos' }
+  const datos = [['Fecha de nacimiento', fechaCorta(paciente.fechaNac.toISOString().slice(0, 10))], ['DNI', paciente.dni], ['Tutor', paciente.tutorNombre], ['Vínculo', paciente.tutorVinculo], ['DNI del tutor', paciente.tutorDni], ['Teléfono', paciente.telefono], ['Email', paciente.email], ['Dirección', paciente.direccion], ['Contacto de emergencia', paciente.contactoEmergencia], ['Cobertura', paciente.particular ? 'Particular' : paciente.obraSocial], ['Número de afiliado', paciente.numeroAfiliado], ['Plan', paciente.plan]]
+  return <div className="min-h-screen p-8"><div className="mx-auto max-w-5xl"><Nav /><Volver href="/pacientes" />
+    <section className="card patient-hero"><span className="initial-avatar blue">{paciente.nombre.charAt(0)}{paciente.apellido.charAt(0)}</span><div className="patient-identity"><div className="mb-2 flex flex-wrap gap-2"><span className="eyebrow !mb-0">Historia pediátrica</span>{paciente.esDemo && <span className="badge badge-amber">Demostración · datos ficticios</span>}</div><h1>{paciente.nombre} {paciente.apellido}</h1><p>{edad(paciente.fechaNac)} · DNI {paciente.dni} · {paciente.particular ? 'Particular' : paciente.obraSocial || 'Sin cobertura registrada'}</p></div><div className="patient-actions"><Link href={`/pacientes/${id}/editar`} className="btn btn-outline"><Pencil size={13} />Editar datos</Link><Link href={`/pacientes/${id}/turnos/nuevo`} className="btn btn-outline"><CalendarPlus size={14} />Agendar</Link>{doctora && <Link href={`/pacientes/${id}/consultas/nueva`} className="btn btn-primary"><Plus size={14} />Nueva consulta</Link>}</div></section>
+    {doctora && paciente.alergias && <div className="mb-5 flex items-center gap-3 rounded-xl border border-[#efd8e2] bg-[#fcf1f6] px-5 py-3 text-xs text-[#ae4d72]"><HeartPulse size={17} /><strong>Alergias registradas:</strong><span>{paciente.alergias}</span></div>}
+    <nav className="patient-tabs" aria-label="Secciones de la ficha">{permitidas.map(s => <Link key={s} className={seccion === s ? 'active' : ''} href={`/pacientes/${id}?seccion=${s}`} aria-current={seccion === s ? 'page' : undefined}>{etiqueta[s]}{s === 'consultas' ? ` (${totalConsultas})` : s === 'vacunas' ? ` (${vacunas.length})` : ''}</Link>)}</nav>
+    {seccion === 'resumen' && <div className="summary-grid"><div>{doctora && <section className="card"><div className="section-heading"><div><p className="eyebrow">Su recorrido</p><h2>Últimos encuentros</h2></div><Link href={`/pacientes/${id}?seccion=consultas`} className="btn-link">Ver todos<ArrowUpRight size={12} /></Link></div>{consultas.length ? consultas.slice(0, 3).map(c => <article className="clinical-entry" key={c.id}><time>{fechaCorta(c.fecha)}</time><h3>{c.motivo}</h3><p className="whitespace-pre-wrap">{c.diagnostico || 'Sin diagnóstico registrado.'}</p><div className="mt-3 flex gap-2">{c.peso && <span className="badge badge-muted">{c.peso} kg</span>}{c.talla && <span className="badge badge-muted">{c.talla} cm</span>}{c.version > 0 && <Link className="badge badge-amber" href={`/pacientes/${id}/consultas/${c.id}/historial`}>Rectificada · ver historial</Link>}</div></article>) : <div className="empty-state"><Sprout size={25} /><h3>Su historia empieza con el próximo encuentro</h3><p>Cargá una consulta para comenzar el seguimiento.</p></div>}</section>}
+      <section className="card"><div className="section-heading"><h2>Próximos turnos</h2><Link className="btn-link" href={`/pacientes/${id}/turnos/nuevo`}>Agendar<Plus size={12} /></Link></div>{pendientes.length ? pendientes.slice(0, 3).map(t => <div key={t.id}><p className="mt-3 text-[10px] text-[#8d9a94]">{fechaCorta(t.fecha)}</p><TurnoFila turno={t} doctora={doctora} compacto /></div>) : <p className="py-4 text-xs text-[#899990]">No hay turnos pendientes.</p>}</section>
+      {doctora && <section className="card"><h2 className="mb-4">Antecedentes y datos al nacer</h2><dl className="detail-grid">{[['Antecedentes familiares', paciente.antecedentesFamiliares], ['Observaciones', paciente.observaciones], ['Peso al nacer', paciente.pesoNacer ? `${paciente.pesoNacer} kg` : null], ['Talla al nacer', paciente.tallaNacer ? `${paciente.tallaNacer} cm` : null], ['Grupo sanguíneo', paciente.grupoSanguineo]].map(([campo, valor]) => <div key={campo}><dt>{campo}</dt><dd className="whitespace-pre-wrap">{valor || 'Sin registrar'}</dd></div>)}</dl></section>}</div>
+      <aside><section className="card"><div className="section-heading"><h2>Su entorno</h2><span className="initial-avatar pink !h-8 !w-8 text-xs">{paciente.tutorNombre?.charAt(0) || 'T'}</span></div><dl className="detail-grid !grid-cols-1">{[['Tutor', paciente.tutorNombre], ['Vínculo', paciente.tutorVinculo], ['Teléfono', paciente.telefono], ['Cobertura', paciente.particular ? 'Particular' : paciente.obraSocial]].map(([campo, valor]) => <div key={campo}><dt>{campo}</dt><dd>{valor || 'Sin registrar'}</dd></div>)}</dl><Link href={`/pacientes/${id}?seccion=datos`} className="btn-link mt-5">Ver todos los datos<ArrowUpRight size={12} /></Link></section><section className="card"><ShieldCheck size={22} className="mb-3 text-[#8aab9a]" /><h2 className="text-xl">Consentimiento</h2><p className="mt-3 text-xs leading-6 text-[#83928a]">{paciente.consentimientoAt ? `Registrado el ${fechaCorta(paciente.consentimientoAt)} por ${paciente.consentimientoPor}.` : 'Esta ficha no tiene consentimiento registrado.'}</p>{!paciente.consentimientoAt && doctora && <Link className="btn-link mt-4" href={`/pacientes/${id}/consentimiento`}>Registrar consentimiento<ArrowUpRight size={12} /></Link>}</section>{doctora && <section className="card"><h2 className="text-xl">Para compartir</h2><p className="my-3 text-xs text-[#83928a]">Descargá una copia para entregar a la familia.</p><a className="btn-link" href={`/pacientes/${id}/exportar?tipo=historia`}><FileDown size={13} />Historia en PDF</a><br /><a className="btn-link mt-2" href={`/pacientes/${id}/exportar?tipo=vacunas`}><FileDown size={13} />Carnet de vacunas</a></section>}</aside></div>}
+    {seccion === 'consultas' && doctora && <><div className="section-heading"><h2>Historia de encuentros</h2><a className="btn-link" href={`/pacientes/${id}/exportar?tipo=historia`}><FileDown size={13} />Descargar historia</a></div>{consultas.length ? consultas.map(c => <article className="card clinical-card" key={c.id}><div className="entry-top"><div><p className="eyebrow">{fechaCorta(c.fecha)} · {horaLocal(c.fecha)}</p><h2>{c.motivo}</h2><div className="mt-3 flex flex-wrap gap-2">{c.peso && <span className="badge badge-muted">{c.peso} kg</span>}{c.talla && <span className="badge badge-muted">{c.talla} cm</span>}{c.version > 0 && <span className="badge badge-amber">Rectificada · versión {c.version}</span>}</div></div><div className="flex flex-wrap gap-2"><Link className="action-btn" href={`/pacientes/${id}/consultas/${c.id}/historial`}>Historial</Link><Link className="action-btn" href={`/pacientes/${id}/consultas/${c.id}/editar`}>Rectificar</Link><ConfirmarEliminar mensaje="¿Ocultar esta consulta? Se conserva su contenido, historial y documentos."><form action={eliminarConsulta.bind(null, id, c.id)}><button className="action-btn-danger">Ocultar</button></form></ConfirmarEliminar></div></div><dl className="entry-body"><div><dt>Diagnóstico</dt><dd>{c.diagnostico || 'Sin registrar'}</dd></div><div><dt>Tratamiento</dt><dd>{c.tratamiento || 'Sin registrar'}</dd></div>{c.observaciones && <div className="col-span-full"><dt>Observaciones</dt><dd>{c.observaciones}</dd></div>}</dl><div className="mt-5 border-t border-[#edf0eb] pt-4"><Documentos pacienteId={id} consultaId={c.id} documentos={c.documentos} /></div></article>) : <div className="card empty-state"><h3>Todavía no hay consultas en esta página.</h3></div>}<div className="mt-5 flex items-center gap-3">{pagina > 1 && <Link className="btn btn-outline" href={`/pacientes/${id}?seccion=consultas&pagina=${pagina - 1}`}>Anteriores</Link>}{pagina * 12 < totalConsultas && <Link className="btn btn-outline" href={`/pacientes/${id}?seccion=consultas&pagina=${pagina + 1}`}>Ver más consultas</Link>}</div></>}
+    {seccion === 'vacunas' && doctora && <section className="card"><div className="section-heading"><h2>Vacunación</h2><div className="flex flex-wrap gap-3"><a className="btn-link" href={`/pacientes/${id}/exportar?tipo=vacunas`}><FileDown size={13} />Carnet PDF</a><Link className="btn btn-primary" href={`/pacientes/${id}/vacunas/nueva`}><Plus size={13} />Registrar vacuna</Link></div></div>{vacunas.length ? vacunas.map(v => <article className="flex flex-wrap items-center justify-between gap-4 border-b border-[#edf0eb] py-5 last:border-0" key={v.id}><div><span className={`badge ${v.fechaAplicada ? 'badge-green' : 'badge-amber'}`}>{v.fechaAplicada ? 'Aplicada' : 'Programada'}</span><h3 className="mt-2">{v.nombre} {v.dosis && `· ${v.dosis}`}</h3><p className="mt-1 text-xs text-[#8b9992]">{fechaCorta((v.fechaAplicada || v.fechaProgramada)!.toISOString().slice(0, 10))}</p>{v.observaciones && <p className="mt-2 text-xs">{v.observaciones}</p>}</div><div className="flex gap-2"><Link className="action-btn" href={`/pacientes/${id}/vacunas/${v.id}/editar`}>Editar</Link><ConfirmarEliminar mensaje="¿Ocultar este registro de vacuna? Los datos se conservan."><form action={eliminarVacuna.bind(null, id, v.id)}><button className="action-btn-danger">Ocultar</button></form></ConfirmarEliminar></div></article>) : <p className="empty-state">Todavía no hay vacunas registradas.</p>}</section>}
+    {seccion === 'documentos' && doctora && <section className="card"><div className="section-heading"><div><p className="eyebrow">Lo que acompaña su historia</p><h2>Documentos del paciente</h2></div></div><p className="mb-5 text-xs text-[#82938b]">Estudios, certificados y consentimientos firmados. Los adjuntos de cada consulta están en Consultas.</p><Documentos pacienteId={id} documentos={documentos} /></section>}
+    {seccion === 'turnos' && <section className="card"><div className="section-heading"><h2>Turnos y encuentros</h2><Link className="btn btn-primary" href={`/pacientes/${id}/turnos/nuevo`}><CalendarPlus size={14} />Agendar</Link></div>{turnos.length ? turnos.map(t => <div key={t.id}><p className="mt-4 text-[10px] text-[#8d9a94]">{fechaCorta(t.fecha)}</p><TurnoFila turno={t} doctora={doctora} /></div>) : <p className="empty-state">Todavía no hay turnos para mostrar.</p>}</section>}
+    {seccion === 'datos' && <section className="card"><div className="section-heading"><h2>Datos del paciente y su familia</h2><Link className="btn-link" href={`/pacientes/${id}/editar`}><Pencil size={13} />Editar datos</Link></div><dl className="detail-grid">{datos.map(([campo, valor]) => <div key={campo}><dt>{campo}</dt><dd>{valor || 'Sin registrar'}</dd></div>)}</dl>{doctora && <div className="mt-8 border-t border-[#edf0eb] pt-5"><ConfirmarEliminar mensaje="¿Ocultar a este paciente? Su historia se conserva y puede recuperarse desde Archivo."><form action={eliminarPaciente.bind(null, id)}><button className="btn-link-danger">Ocultar paciente</button></form></ConfirmarEliminar></div>}</section>}
+  </div></div>
 }

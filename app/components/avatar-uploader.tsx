@@ -10,7 +10,7 @@ export default function AvatarUploader({ email, nombre, color, avatarUrl }: {
   const [error, setError] = useState('')
   const [subiendo, setSubiendo] = useState(false)
   return <div>
-    <button type="button" title="Cambiar foto" disabled={subiendo} onClick={() => input.current?.click()}
+    <button type="button" title="Cambiar foto" aria-label="Cambiar foto de perfil" disabled={subiendo} onClick={() => input.current?.click()}
       className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-sm font-medium text-white"
       style={{ backgroundColor: color }}>
       {avatarUrl ? (

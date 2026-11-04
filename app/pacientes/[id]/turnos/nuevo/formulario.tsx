@@ -1,4 +1,5 @@
 'use client'
+import CambiosPendientes from '@/app/components/cambios-pendientes'
 
 import { useState } from 'react'
 import { Check } from 'lucide-react'
@@ -26,18 +27,19 @@ export default function FormularioTurno({ pacienteId }: { pacienteId: string }) 
 
   return (
     <form action={onSubmit} className="card space-y-4">
+      <CambiosPendientes />
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Fecha y hora *</label>
-        <input name="fecha" type="datetime-local" required className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Fecha y hora *
+        <input name="fecha" type="datetime-local" required className="input mt-1" /></label>
       </div>
-      <div><label className="block text-sm font-medium">Duración</label><select name="duracion" className="input mt-1" defaultValue={30}><option value={15}>15 minutos</option><option value={30}>30 minutos</option><option value={45}>45 minutos</option><option value={60}>60 minutos</option></select></div>
+      <div><label className="block text-sm font-medium">Duración<select name="duracion" className="input mt-1" defaultValue={30}><option value={15}>15 minutos</option><option value={30}>30 minutos</option><option value={45}>45 minutos</option><option value={60}>60 minutos</option></select></label></div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Motivo</label>
-        <input name="motivo" className="input mt-1" placeholder="Ej: Control de rutina, seguimiento..." />
+        <label className="block text-sm font-medium text-[#1c2521]">Motivo
+        <input name="motivo" className="input mt-1" placeholder="Ej: Control de rutina, seguimiento..." /></label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Observaciones</label>
-        <textarea name="observaciones" rows={2} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Observaciones
+        <textarea name="observaciones" rows={2} className="input mt-1" /></label>
       </div>
 
       {error && <p role="alert" className="form-error">{error}</p>}

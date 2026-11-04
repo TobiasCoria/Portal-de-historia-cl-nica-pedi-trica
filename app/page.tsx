@@ -1,5 +1,2 @@
 import { redirect } from 'next/navigation'
-
-export default function InicioPage() {
-  redirect('/agenda')
-}
+export default function InicioPage() { redirect('/hoy') }

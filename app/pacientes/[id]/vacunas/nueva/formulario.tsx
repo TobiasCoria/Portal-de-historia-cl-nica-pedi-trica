@@ -1,4 +1,5 @@
 'use client'
+import CambiosPendientes from '@/app/components/cambios-pendientes'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -49,17 +50,18 @@ export default function FormularioVacuna({ pacienteId }: { pacienteId: string })
 
   return (
     <form action={onSubmit} className="card space-y-4">
+      <CambiosPendientes />
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Nombre de la vacuna *</label>
-        <input name="nombre" required className="input mt-1" placeholder="Ej: BCG, Sabin, Triple viral..." />
+        <label className="block text-sm font-medium text-[#1c2521]">Nombre de la vacuna *
+        <input name="nombre" required className="input mt-1" placeholder="Ej: BCG, Sabin, Triple viral..." /></label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Dosis</label>
-        <input name="dosis" className="input mt-1" placeholder="Ej: 1era dosis, refuerzo..." />
+        <label className="block text-sm font-medium text-[#1c2521]">Dosis
+        <input name="dosis" className="input mt-1" placeholder="Ej: 1era dosis, refuerzo..." /></label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Fecha aplicada</label>
-        <input name="fechaAplicada" type="date" className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Fecha aplicada
+        <input name="fechaAplicada" type="date" className="input mt-1" /></label>
         <p className="mt-1 text-xs text-[#5b6b64]">Dejá vacío si solo querés programar una dosis futura, sin aplicar nada hoy.</p>
       </div>
 
@@ -76,20 +78,20 @@ export default function FormularioVacuna({ pacienteId }: { pacienteId: string })
         <div className="rounded border border-[#e3e7e2] p-3">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#1c2521]">Dosis (próxima)</label>
-              <input name="proximaDosis" className="input mt-1" placeholder="Ej: refuerzo" />
+              <label className="block text-sm font-medium text-[#1c2521]">Dosis (próxima)
+              <input name="proximaDosis" className="input mt-1" placeholder="Ej: refuerzo" /></label>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1c2521]">Fecha programada *</label>
-              <input name="proximaFecha" type="date" required={programarProxima} className="input mt-1" />
+              <label className="block text-sm font-medium text-[#1c2521]">Fecha programada *
+              <input name="proximaFecha" type="date" required={programarProxima} className="input mt-1" /></label>
             </div>
           </div>
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Observaciones</label>
-        <textarea name="observaciones" rows={2} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Observaciones
+        <textarea name="observaciones" rows={2} className="input mt-1" /></label>
       </div>
 
       {error && <p role="alert" className="form-error">{error}</p>}

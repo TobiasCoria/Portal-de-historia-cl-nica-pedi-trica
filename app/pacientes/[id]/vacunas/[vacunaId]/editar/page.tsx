@@ -1,3 +1,4 @@
+import PacienteContexto from '@/app/components/paciente-contexto'
 import { requireRole } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import { obtenerVacuna } from '../../lecturas'
@@ -21,8 +22,8 @@ export default async function EditarVacunaPage({
       <div className="mx-auto max-w-2xl">
         <Nav />
         <Volver href={`/pacientes/${id}`} />
-        <h1 className="mb-6 text-2xl">Editar vacuna</h1>
-        <FormularioEdicionVacuna pacienteId={id} vacuna={vacuna} />
+        <h1 className="mb-7">Editar vacuna</h1>
+        <div className="form-columns"><div className="form-panel"><FormularioEdicionVacuna pacienteId={id} vacuna={vacuna} /></div><PacienteContexto id={id} /></div>
       </div>
     </div>
   )

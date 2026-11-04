@@ -1,3 +1,4 @@
+import PacienteContexto from '@/app/components/paciente-contexto'
 import { requireRole } from '@/lib/auth'
 import Nav from '@/app/components/nav'
 import Volver from '@/app/components/volver'
@@ -19,8 +20,8 @@ export default async function NuevaConsultaPage({
       <div className="mx-auto max-w-2xl">
         <Nav />
         <Volver href={`/pacientes/${id}`} />
-        <h1 className="mb-6 text-2xl">Nueva consulta</h1>
-        <FormularioConsulta pacienteId={id} turnoId={turnoId} />
+        <h1 className="mb-7">Nueva consulta</h1>
+        <div className="form-columns"><div className="form-panel"><FormularioConsulta pacienteId={id} turnoId={turnoId} /></div><PacienteContexto id={id} /></div>
       </div>
     </div>
   )

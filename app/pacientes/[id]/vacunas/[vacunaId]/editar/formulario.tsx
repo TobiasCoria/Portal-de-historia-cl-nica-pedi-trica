@@ -1,4 +1,5 @@
 'use client'
+import CambiosPendientes from '@/app/components/cambios-pendientes'
 
 import { useState } from 'react'
 import { Check } from 'lucide-react'
@@ -43,27 +44,28 @@ export default function FormularioEdicionVacuna({
 
   return (
     <form action={onSubmit} className="card space-y-4">
+      <CambiosPendientes />
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Nombre de la vacuna *</label>
-        <input name="nombre" required defaultValue={vacuna.nombre} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Nombre de la vacuna *
+        <input name="nombre" required defaultValue={vacuna.nombre} className="input mt-1" /></label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Dosis</label>
-        <input name="dosis" defaultValue={vacuna.dosis ?? ''} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Dosis
+        <input name="dosis" defaultValue={vacuna.dosis ?? ''} className="input mt-1" /></label>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[#1c2521]">Fecha aplicada</label>
-          <input name="fechaAplicada" type="date" defaultValue={formatoFecha(vacuna.fechaAplicada)} className="input mt-1" />
+          <label className="block text-sm font-medium text-[#1c2521]">Fecha aplicada
+          <input name="fechaAplicada" type="date" defaultValue={formatoFecha(vacuna.fechaAplicada)} className="input mt-1" /></label>
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#1c2521]">Próxima dosis</label>
-          <input name="fechaProgramada" type="date" defaultValue={formatoFecha(vacuna.fechaProgramada)} className="input mt-1" />
+          <label className="block text-sm font-medium text-[#1c2521]">Próxima dosis
+          <input name="fechaProgramada" type="date" defaultValue={formatoFecha(vacuna.fechaProgramada)} className="input mt-1" /></label>
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Observaciones</label>
-        <textarea name="observaciones" rows={2} defaultValue={vacuna.observaciones ?? ''} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Observaciones
+        <textarea name="observaciones" rows={2} defaultValue={vacuna.observaciones ?? ''} className="input mt-1" /></label>
       </div>
 
       {error && (

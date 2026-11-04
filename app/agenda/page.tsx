@@ -1,73 +1,26 @@
 import Link from 'next/link'
-import { Syringe, CalendarDays } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CalendarDays, CalendarPlus } from 'lucide-react'
+import { leerAgenda } from '@/lib/agenda-vista'
 import { obtenerAgendaProxima } from '@/lib/agenda'
-import Nav from '../components/nav'
-import Volver from '../components/volver'
+import { fechaHoy, fechaValida, fechaCorta, sumarDias, horaLocal } from '@/lib/fechas'
+import Nav from '@/app/components/nav'
+import TurnoFila from '@/app/components/turno-fila'
 import BuscadorTurno from './buscador-turno'
 
-// La agenda depende de la fecha y de la sesión: nunca debe generarse en el build ni quedar cacheada
 export const dynamic = 'force-dynamic'
-
-export default async function AgendaPage() {
-  const items = await obtenerAgendaProxima()
-
-  return (
-    <div className="min-h-screen p-8">
-      <div className="mx-auto max-w-3xl">
-        <Nav />
-        <Volver href="/pacientes" />
-
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl">Agenda</h1>
-        </div>
-
-        <BuscadorTurno />
-
-        {items.length === 0 ? (
-          <div className="card text-center text-[#5b6b64]">
-            No hay vacunas ni turnos pendientes en los próximos 30 días.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {items.map((item) => (
-              <Link
-                key={`${item.tipo}-${item.id}`}
-                href={`/pacientes/${item.pacienteId}`}
-                className={`card flex items-center justify-between text-sm hover:opacity-90 ${
-                  item.vencido ? 'card-alerta-roja' : item.urgente ? 'card-alerta-amarilla' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {item.tipo === 'vacuna' ? (
-                    <Syringe size={16} className="text-[#5b6b64]" />
-                  ) : (
-                    <CalendarDays size={16} className="text-[#5b6b64]" />
-                  )}
-                  <div>
-                    <span className="font-medium">{item.paciente.nombre} {item.paciente.apellido}</span>
-                    <span className="ml-2 text-[#5b6b64]">— {item.titulo}</span>
-                  </div>
-                </div>
-                <span
-                  className={
-                    item.vencido
-                      ? 'font-medium text-red-600'
-                      : item.urgente
-                      ? 'font-medium text-[#c99a2e]'
-                      : 'text-[#5b6b64]'
-                  }
-                >
-                  {item.vencido ? '⚠ Vencido' : item.urgente ? '⏰ En menos de 24hs' : 'Próximo'}
-                  {' — '}
-                  {item.tipo === 'turno'
-                    ? new Date(item.fecha).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-                    : new Date(item.fecha).toLocaleDateString('es-AR')}
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
+export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ fecha?: string; vista?: string; pendientes?: string }> }) {
+  const params = await searchParams
+  const fecha = params.fecha && fechaValida(params.fecha) ? params.fecha : fechaHoy()
+  const semana = params.vista === 'semana'
+  const { user, turnos, vacunas } = await leerAgenda(fecha, semana ? 7 : 1)
+  const pendientes = params.pendientes === '1' ? await obtenerAgendaProxima() : []
+  const href = (f: string, v = semana ? 'semana' : 'dia') => `/agenda?${new URLSearchParams({ fecha: f, vista: v })}`
+  return <div className="min-h-screen p-8"><div className="mx-auto max-w-5xl"><Nav />
+    <div className="page-heading"><div><p className="eyebrow">Tiempo para cada encuentro</p><h1>Agenda</h1><p className="page-description">Organizá la jornada y encontrá el próximo espacio para atender.</p></div><span className="badge"><CalendarDays size={12} />Hora de Rosario</span></div>
+    <div className="toolbar"><div className="flex flex-wrap items-center gap-2"><Link href={href(sumarDias(fecha, semana ? -7 : -1))} className="btn btn-outline" aria-label="Período anterior"><ChevronLeft size={14} /></Link><Link href={href(fechaHoy())} className="btn btn-outline">Hoy</Link><Link href={href(sumarDias(fecha, semana ? 7 : 1))} className="btn btn-outline" aria-label="Período siguiente"><ChevronRight size={14} /></Link><span className="ml-2 text-sm font-medium">{fechaCorta(fecha)}{semana ? ` — ${fechaCorta(sumarDias(fecha, 6))}` : ''}</span></div><div className="segmented"><Link href={href(fecha, 'dia')} className={!semana ? 'active' : ''}>Día</Link><Link href={href(fecha, 'semana')} className={semana ? 'active' : ''}>Semana</Link></div></div>
+    <div className="toolbar"><form action="/agenda" className="flex gap-2"><input type="hidden" name="vista" value={semana ? 'semana' : 'dia'} /><label htmlFor="fecha-agenda" className="screen-reader">Ir a la fecha</label><input id="fecha-agenda" className="input" type="date" name="fecha" defaultValue={fecha} required /><button className="btn btn-outline">Ir</button></form><BuscadorTurno /></div>
+    {semana ? <section className="calendar-grid" aria-label="Agenda de siete días">{Array.from({ length: 7 }, (_, i) => sumarDias(fecha, i)).map(dia => <article key={dia} className={`calendar-day ${dia === fechaHoy() ? 'today' : ''}`}><Link href={href(dia, 'dia')} className="calendar-day-header"><span>{new Date(dia + 'T12:00:00-03:00').toLocaleDateString('es-AR', { weekday: 'short' })}</span><strong>{dia.slice(-2)}</strong></Link>{turnos.filter(t => fechaHoy(t.fecha) === dia).map(t => <Link className={`calendar-event ${t.estado === 'CANCELADO' ? 'cancelado' : ''}`} key={t.id} href={`/pacientes/${t.pacienteId}?seccion=turnos`}><time>{horaLocal(t.fecha)} · {t.duracion} min</time><strong>{t.paciente.nombre} {t.paciente.apellido}</strong><span>{t.estado === 'PENDIENTE' ? t.motivo || 'Consulta' : t.estado === 'ATENDIDO' ? 'Atendido' : t.estado === 'AUSENTE' ? 'Ausente' : 'Cancelado'}</span></Link>)}{vacunas.filter(v => v.fechaProgramada?.toISOString().slice(0, 10) === dia).map(v => <Link className="calendar-event vacuna" href={`/pacientes/${v.pacienteId}?seccion=vacunas`} key={v.id}><time>Dosis programada</time><strong>{v.paciente.nombre} {v.paciente.apellido}</strong>{v.nombre}</Link>)}</article>)}</section> : <section className="card"><div className="section-heading"><h2>Encuentros del día</h2><small>{turnos.length} turnos registrados</small></div>{turnos.length ? turnos.map(t => <TurnoFila key={t.id} turno={t} doctora={user.rol === 'DOCTORA'} />) : <div className="empty-state"><CalendarPlus size={30} /><h3>Este día tiene lugar para nuevas historias</h3><p>Buscá un paciente con el botón Agendar turno para reservar un horario.</p></div>}{vacunas.length > 0 && <div className="mt-6 border-t border-[#e5e9e6] pt-5"><h3>Dosis programadas</h3>{vacunas.map(v => <Link className="mt-3 block rounded-lg bg-[#f7f3eb] p-4 text-xs" href={`/pacientes/${v.pacienteId}?seccion=vacunas`} key={v.id}>{v.paciente.nombre} {v.paciente.apellido} · {v.nombre} {v.dosis}</Link>)}</div>}</section>}
+    <div className="mt-5"><Link className="btn-link" href={params.pendientes === '1' ? '/agenda' : '/agenda?pendientes=1'}>{params.pendientes === '1' ? 'Cerrar pendientes' : 'Ver pendientes de los próximos 30 días y vencidos'}</Link></div>
+    {params.pendientes === '1' && <section className="card mt-4"><h2 className="mb-4">Pendientes</h2>{pendientes.length ? pendientes.map(i => <Link key={`${i.tipo}-${i.id}`} href={`/pacientes/${i.pacienteId}?seccion=${i.tipo === 'vacuna' ? 'vacunas' : 'turnos'}`} className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf0eb] py-4 last:border-0"><div><strong className="text-xs">{i.paciente.nombre} {i.paciente.apellido}</strong><p className="text-[11px] text-[#8c9994]">{i.titulo}</p></div><span className={`badge ${i.vencido ? 'badge-pink' : 'badge-amber'}`}>{fechaCorta(i.fecha)} · {i.vencido ? 'Vencido' : 'Próximo'}</span></Link>) : <p className="empty-state">No hay pendientes para mostrar.</p>}</section>}
+  </div></div>
 }

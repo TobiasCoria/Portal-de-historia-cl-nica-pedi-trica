@@ -1,3 +1,4 @@
+import PacienteContexto from '@/app/components/paciente-contexto'
 import { notFound } from 'next/navigation'
 import { obtenerTurno } from '../../lecturas'
 import Nav from '@/app/components/nav'
@@ -19,8 +20,8 @@ export default async function EditarTurnoPage({
       <div className="mx-auto max-w-2xl">
         <Nav />
         <Volver href={`/pacientes/${id}`} />
-        <h1 className="mb-6 text-2xl">Editar turno</h1>
-        <FormularioEdicionTurno pacienteId={id} turno={turno} />
+        <h1 className="mb-7">Editar turno</h1>
+        <div className="form-columns"><div className="form-panel"><FormularioEdicionTurno pacienteId={id} turno={turno} /></div><PacienteContexto id={id} /></div>
       </div>
     </div>
   )

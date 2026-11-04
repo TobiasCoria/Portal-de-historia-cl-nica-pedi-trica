@@ -1,4 +1,5 @@
 'use client'
+import CambiosPendientes from '@/app/components/cambios-pendientes'
 
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
@@ -63,6 +64,7 @@ export default function PacienteWizard({ clinico = true }: { clinico?: boolean }
 
   return (
     <div className="card">
+      <CambiosPendientes />
       <div className="mb-6 flex items-center gap-2">
         {PASOS.map((p, i) => (
           <div
@@ -198,8 +200,7 @@ export default function PacienteWizard({ clinico = true }: { clinico?: boolean }
 function Campo({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-[#1c2521]">{label}</label>
-      <div className="mt-1">{children}</div>
+      <label className="block text-sm font-medium text-[#1c2521]">{label}<span className="mt-1 block">{children}</span></label>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   )

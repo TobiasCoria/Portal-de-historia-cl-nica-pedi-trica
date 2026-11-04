@@ -24,6 +24,7 @@ export async function listarPacientes(busqueda?: string) {
           }
         : {}),
     },
+    take: 8,
     select: { id: true, nombre: true, apellido: true, dni: true },
     orderBy: { apellido: 'asc' },
   })

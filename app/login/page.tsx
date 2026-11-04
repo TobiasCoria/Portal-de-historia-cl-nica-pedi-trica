@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
+import Brand from '@/app/components/brand'
+import { ArrowRight, LockKeyhole } from 'lucide-react'
 import { PERFILES } from '@/lib/perfiles-config'
 
 
@@ -52,84 +55,17 @@ export default function LoginPage() {
     }
   }
 
-  if (!seleccionado) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-white p-8">
-        <h1 className="mb-2 font-serif text-3xl text-[#1c2521]">Portal Pediatría</h1>
-        <p className="mb-12 text-sm text-[#5b6b64]">¿Quién está usando el sistema?</p>
 
-        <div className="flex gap-10">
-          {perfiles.map((p) => (
-            <div key={p.email} className="flex flex-col items-center gap-3">
-              <div className="group relative">
-                <button
-                  onClick={() => setSeleccionado(p)}
-                  className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full text-4xl font-medium text-white shadow-sm transition-transform group-hover:scale-105"
-                  style={{ backgroundColor: p.color }}
-                >
-                  {p.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.avatarUrl} alt={p.nombre} className="h-full w-full object-cover" />
-                  ) : (
-                    p.nombre.charAt(0)
-                  )}
-                </button>
-
-              </div>
-              <span className="text-sm font-medium text-[#1c2521]">{p.nombre}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-white p-8">
-      <form onSubmit={handleLogin} className="card w-full max-w-sm space-y-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full text-lg font-medium text-white"
-            style={{ backgroundColor: seleccionado.color }}
-          >
-            {seleccionado.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={seleccionado.avatarUrl} alt={seleccionado.nombre} className="h-full w-full object-cover" />
-            ) : (
-              seleccionado.nombre.charAt(0)
-            )}
-          </div>
-          <div>
-            <p className="font-medium text-[#1c2521]">{seleccionado.nombre}</p>
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => { setSeleccionado(null); setPassword(''); setError('') }}
-              className="btn-link text-xs"
-            >
-              Cambiar perfil
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-[#1c2521]">Contraseña</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoFocus
-            className="input mt-1"
-          />
-        </div>
-
-        {error && <p className="text-sm text-red-600">{error}</p>}
-
-        <button type="submit" disabled={loading} className="btn btn-primary w-full disabled:opacity-50">
-          {loading ? 'Ingresando...' : 'Ingresar'}
-        </button>
-      </form>
-    </div>
-  )
+  return <div className="login-layout">
+    <section className="login-story"><Brand /><div className="story-copy"><p className="eyebrow" style={{ color: '#99b9b1' }}>Cada etapa merece cuidado</p><h1>Un lugar para cuidar.<br />Una historia para acompañar.</h1><p>La información que necesitás, en un espacio pensado para el ritmo de tu consultorio.</p></div><div className="login-footer">PORTAL PEDIATRÍA · HISTORIAS QUE CRECEN</div></section>
+    <section className="login-form-area"><div className="login-form-inner"><p className="eyebrow">Te damos la bienvenida</p><h2>{seleccionado ? 'Ingresá a tu espacio' : '¿Quién ingresa hoy?'}</h2><p className="page-description">{seleccionado ? 'Usá la contraseña de tu cuenta para continuar.' : 'Elegí tu perfil para comenzar la jornada.'}</p>
+      {!seleccionado ? <div className="profile-choices">{perfiles.map(p => <button className="profile-choice" key={p.email} onClick={() => setSeleccionado(p)}><span className={'initial-avatar ' + (p.rol === 'DOCTORA' ? 'blue' : 'pink')}>{p.nombre.charAt(0)}</span><strong>{p.nombre}</strong><ArrowRight size={14} className="text-[#8eaaa0]" /></button>)}</div> :
+      <form onSubmit={handleLogin} className="space-y-5"><div className="flex items-center justify-between rounded-xl border border-[#e0e6de] bg-white p-4"><div className="flex items-center gap-3"><span className="initial-avatar blue">{seleccionado.nombre.charAt(0)}</span><div><strong className="text-xs">{seleccionado.nombre}</strong><p className="text-[10px] text-[#8b9b94]">{seleccionado.email}</p></div></div><button type="button" disabled={loading} className="btn-link" onClick={() => { setSeleccionado(null); setPassword(''); setError('') }}>Cambiar</button></div>
+        <div><label htmlFor="clave" className="mb-2 block text-xs">Contraseña</label><input id="clave" autoComplete="current-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoFocus className="input" /></div>
+        {error && <p role="alert" className="form-error">{error}</p>}
+        <button type="submit" disabled={loading} className="btn btn-primary w-full">{loading ? 'Ingresando…' : 'Ingresar al consultorio'}<ArrowRight size={15} /></button><Link href="/recuperar-clave" className="btn-link justify-center w-full">Olvidé mi contraseña</Link>
+      </form>}
+      <p className="login-caption"><LockKeyhole size={12} className="mb-2" />Acceso exclusivo para el equipo del consultorio.<br />Cuidamos la privacidad de cada historia.</p>
+    </div></section>
+  </div>
 }

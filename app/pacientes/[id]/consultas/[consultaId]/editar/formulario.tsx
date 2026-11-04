@@ -1,4 +1,5 @@
 'use client'
+import CambiosPendientes from '@/app/components/cambios-pendientes'
 
 import { useState } from 'react'
 import { Check } from 'lucide-react'
@@ -39,36 +40,37 @@ export default function FormularioEdicionConsulta({
 
   return (
     <form action={onSubmit} className="card space-y-4">
+      <CambiosPendientes />
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Motivo de consulta *</label>
-        <input name="motivo" required defaultValue={consulta.motivo} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Motivo de consulta *
+        <input name="motivo" required defaultValue={consulta.motivo} className="input mt-1" /></label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Diagnóstico</label>
-        <textarea name="diagnostico" rows={2} defaultValue={consulta.diagnostico ?? ''} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Diagnóstico
+        <textarea name="diagnostico" rows={2} defaultValue={consulta.diagnostico ?? ''} className="input mt-1" /></label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Tratamiento</label>
-        <textarea name="tratamiento" rows={2} defaultValue={consulta.tratamiento ?? ''} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Tratamiento
+        <textarea name="tratamiento" rows={2} defaultValue={consulta.tratamiento ?? ''} className="input mt-1" /></label>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[#1c2521]">Peso (kg)</label>
-          <input name="peso" type="number" step="0.01" defaultValue={consulta.peso ?? ''} className="input mt-1" />
+          <label className="block text-sm font-medium text-[#1c2521]">Peso (kg)
+          <input name="peso" type="number" step="0.01" defaultValue={consulta.peso ?? ''} className="input mt-1" /></label>
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#1c2521]">Talla (cm)</label>
-          <input name="talla" type="number" step="0.1" defaultValue={consulta.talla ?? ''} className="input mt-1" />
+          <label className="block text-sm font-medium text-[#1c2521]">Talla (cm)
+          <input name="talla" type="number" step="0.1" defaultValue={consulta.talla ?? ''} className="input mt-1" /></label>
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-[#1c2521]">Observaciones</label>
-        <textarea name="observaciones" rows={2} defaultValue={consulta.observaciones ?? ''} className="input mt-1" />
+        <label className="block text-sm font-medium text-[#1c2521]">Observaciones
+        <textarea name="observaciones" rows={2} defaultValue={consulta.observaciones ?? ''} className="input mt-1" /></label>
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Motivo de la rectificación *</label>
-        <textarea name="motivoCambio" required minLength={5} rows={2} className="input mt-1" placeholder="Contá por qué necesitás corregir esta consulta." />
+        <label className="block text-sm font-medium">Motivo de la rectificación *
+        <textarea name="motivoCambio" required minLength={5} rows={2} className="input mt-1" placeholder="Contá por qué necesitás corregir esta consulta." /></label>
         <p className="mt-2 text-xs text-[#5b6b64]">La versión anterior queda conservada en el historial.</p>
       </div>
       {error && (
