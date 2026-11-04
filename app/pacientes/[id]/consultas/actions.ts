@@ -20,10 +20,11 @@ export async function crearConsulta(pacienteId: string, data: {
   observaciones?: string
 }, turnoId?: string) {
   const user = await requireRole('DOCTORA')
+  let consultaId = ''
   try {
 data = consultaSchema.parse(data)
   await requirePaciente(pacienteId)
-  await mutarConAuditoria('Consulta', 'ALTA', Object.keys(data), async (tx) => {
+  const creada = await mutarConAuditoria('Consulta', 'ALTA', Object.keys(data), async (tx) => {
     const consulta = await tx.consulta.create({ data: { ...data, pacienteId, autorEmail: user.email } })
     if (turnoId) {
       const turno = await tx.turno.update({ where: { id: turnoId, pacienteId, estado: 'PENDIENTE' }, data: { estado: 'ATENDIDO', consultaId: consulta.id } })
@@ -31,14 +32,14 @@ data = consultaSchema.parse(data)
     }
     return consulta
   })
-
+  consultaId = creada.id
   
   } catch (error) { return { error: mensajeError(error) } }
   revalidatePath('/hoy')
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
-  redirect(`/pacientes/${pacienteId}`)
+  redirect(`/pacientes/${pacienteId}/consultas/${consultaId}/cierre`)
 }
 
 

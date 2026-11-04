@@ -29,6 +29,7 @@ export async function subirDocumento(formData: FormData) {
     pacienteId, consultaId, nombre: archivo.name, url: path, tipo: archivo.type,
   } }))
   revalidatePath(`/pacientes/${pacienteId}`)
+  revalidatePath('/pacientes/[id]/consultas/[consultaId]/cierre', 'page')
 }
 
 export async function obtenerUrlDocumento(id: string) {
@@ -52,4 +53,5 @@ export async function eliminarDocumento(pacienteId: string, id: string) {
     data: { eliminadoEn: new Date() },
   }))
   revalidatePath(`/pacientes/${pacienteId}`)
+  revalidatePath('/pacientes/[id]/consultas/[consultaId]/cierre', 'page')
 }

@@ -1863,3 +1863,17 @@ form[aria-busy="true"] button[type="submit"]:disabled:after {
 @media(max-width:1024px){.topbar{flex-wrap:wrap}.topbar-actions{margin-left:auto}.account-trigger{padding:6px 9px;gap:8px;min-height:44px}.account-avatar{width:31px;height:31px;font-size:15px}.account-identity strong{font-size:11px;max-width:130px}.account-identity small{font-size:9px}.account-panel{width:300px}.directorio-filtros .search-field{max-width:none}}
 @media(max-width:540px){.topbar{display:grid;grid-template-columns:1fr auto;gap:13px}.topbar .mobile-brand{grid-column:1;grid-row:1}.topbar-actions{display:contents}.topbar-actions>.btn{grid-column:1/-1;grid-row:2;width:100%;min-height:40px}.account-menu{grid-column:2;grid-row:1}.account-trigger{max-width:210px}.account-identity strong{max-width:110px}.account-chevron{width:11px}.directorio-opciones{width:100%;flex-wrap:wrap}.directorio-opciones .input{flex:1;min-width:160px}.directorio-opciones .btn{min-height:44px}.search-clear{height:37px;top:5px}.account-panel{top:calc(100% + 12px)}}
 @media(prefers-reduced-motion:reduce){.account-panel,.search-spinner{animation:none!important}.account-chevron{transition:none!important}}
+/* Historiales, estados y continuidad de la atención. */
+.historial-paginacion{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:22px 0 8px;font-size:11px;color:#657c72}
+.historial-paginacion>div{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.agenda-estados{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 22px}
+.agenda-filtro{display:inline-flex;align-items:center;gap:8px;border:1px solid #dce4de;border-radius:10px;padding:9px 12px;font-size:11px;background:#fff;color:#496157}
+.agenda-filtro span{font-variant-numeric:tabular-nums;border-radius:5px;padding:1px 5px;background:#ffffffa8}
+.agenda-filtro.active{outline:2px solid #3e6fa8;outline-offset:2px;font-weight:700}
+.turno-estado{margin-top:7px}
+.estado-proximo{background:#edf3fc;color:#315d91}.estado-vencido{background:#fff3d7;color:#79550d}.estado-atendido{background:#e8f4ed;color:#306747}.estado-cancelado{background:#edf0ef;color:#55615d}.estado-ausente{background:#fbecee;color:#963d50}
+.calendar-event .badge{display:inline-flex;width:fit-content;margin:5px 0 2px;font-size:9px;white-space:normal}
+.calendar-event.calendar-cancelado{background:#eff1f0;border-left-color:#8e9993;color:#5f6e66}.calendar-event.calendar-ausente{background:#fceff1;border-left-color:#b25269;color:#963d50}.calendar-event.calendar-atendido{background:#edf6ef;border-left-color:#518363}.calendar-event.calendar-vencido{background:#fff7e6;border-left-color:#be9139}
+.appointment-cancelado .appointment-info>p{color:#7b8781}.appointment-ausente{border-left:3px solid #b25269;padding-left:12px}.appointment-vencido{border-left:3px solid #be9139;padding-left:12px}.appointment-resolved{color:#518363}
+.consulta-pasos{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 24px;font-size:11px;color:#6c8076}.consulta-pasos>*{padding:9px 12px;background:#edf0eb;border:1px solid #e0e6de;border-radius:9px}.consulta-pasos [aria-current=step]{background:#e8f0fa;color:#315d91;border-color:#c9d9ec;font-weight:700}
+@media(max-width:540px){.historial-paginacion{align-items:flex-start;flex-direction:column}.agenda-filtro{padding:9px 10px}.consulta-pasos{gap:6px}.consulta-pasos>*{padding:8px;font-size:10px}}

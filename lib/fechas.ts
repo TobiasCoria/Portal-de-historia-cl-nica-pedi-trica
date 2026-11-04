@@ -11,6 +11,10 @@ export function sumarDias(dia: string, cantidad: number) {
   fecha.setUTCDate(fecha.getUTCDate() + cantidad)
   return fechaHoy(fecha)
 }
+export function inicioSemana(dia: string) {
+  const diaSemana = new Date(`${dia}T12:00:00-03:00`).getUTCDay()
+  return sumarDias(dia, -((diaSemana + 6) % 7))
+}
 export function fechaCorta(valor: Date | string) {
   // Las fechas sin hora se conservan como días de calendario.
   const fecha = typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor) ? diaLocal(valor) : new Date(valor)
