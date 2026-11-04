@@ -44,6 +44,9 @@ model Paciente {
   fotoUrl       String?
 
   // Paso 2 — Contacto y tutores
+  tutorVinculo String?
+  consentimientoAt DateTime?
+  consentimientoPor String?
   tutorNombre   String?
   tutorDni      String?
   telefono      String?

@@ -2,7 +2,7 @@
 
 import { mutarConAuditoria } from '@/lib/auditoria'
 
-import { schema } from './schema'
+import { schema, schemaAlta, type PacienteAltaData, type PacienteFormData } from './schema'
 import { requireUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
@@ -29,36 +29,18 @@ export async function listarPacientes(busqueda?: string) {
   })
 }
 
-export async function crearPaciente(data: {
-  nombre: string
-  apellido: string
-  dni: string
-  fechaNac: string
-  sexo?: 'MASCULINO' | 'FEMENINO'
-  tutorNombre?: string
-  tutorDni?: string
-  telefono?: string
-  email?: string
-  direccion?: string
-  contactoEmergencia?: string
-  antecedentesFamiliares?: string
-  alergias?: string
-  pesoNacer?: number
-  tallaNacer?: number
-  grupoSanguineo?: string
-  observaciones?: string
-  obraSocial?: string
-  numeroAfiliado?: string
-  plan?: string
-  particular?: boolean
-}): Promise<{ error: string } | void> {
-  await requireUser()
-  data = schema.parse(data)
+export async function crearPaciente(data: PacienteAltaData): Promise<{ error: string } | void> {
+  const user = await requireUser()
+  const validacion = schemaAlta.safeParse(data)
+  if (!validacion.success) return { error: validacion.error.issues[0]?.message || 'Revisá los datos del paciente.' }
+  const datos = schema.parse(validacion.data)
   try {
-    await mutarConAuditoria('Paciente', 'ALTA', Object.keys(data), tx => tx.paciente.create({
+    await mutarConAuditoria('Paciente', 'ALTA', [...Object.keys(datos), 'consentimientoAt', 'consentimientoPor'], tx => tx.paciente.create({
       data: {
-        ...data,
-        fechaNac: new Date(data.fechaNac),
+        ...datos,
+        fechaNac: new Date(datos.fechaNac),
+        consentimientoAt: new Date(),
+        consentimientoPor: user.email,
       },
     }))
   } catch (error) {
@@ -86,29 +68,7 @@ export async function eliminarPaciente(id: string) {
 
 
 
-export async function actualizarPaciente(id: string, data: {
-  nombre: string
-  apellido: string
-  dni: string
-  fechaNac: string
-  sexo?: 'MASCULINO' | 'FEMENINO'
-  tutorNombre?: string
-  tutorDni?: string
-  telefono?: string
-  email?: string
-  direccion?: string
-  contactoEmergencia?: string
-  antecedentesFamiliares?: string
-  alergias?: string
-  pesoNacer?: number
-  tallaNacer?: number
-  grupoSanguineo?: string
-  observaciones?: string
-  obraSocial?: string
-  numeroAfiliado?: string
-  plan?: string
-  particular?: boolean
-}): Promise<{ error: string } | void> {
+export async function actualizarPaciente(id: string, data: PacienteFormData): Promise<{ error: string } | void> {
   await requireUser()
   data = schema.parse(data)
   try {

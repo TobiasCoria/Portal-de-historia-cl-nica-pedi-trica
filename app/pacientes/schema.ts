@@ -15,6 +15,7 @@ export const schema = z.object({
   // Paso 2
   tutorNombre: z.string().optional(),
   tutorDni: z.string().optional(),
+  tutorVinculo: z.string().trim().optional(),
   telefono: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   direccion: z.string().optional(),
@@ -36,3 +37,12 @@ export const schema = z.object({
 })
 
 export type PacienteFormData = z.infer<typeof schema>
+
+export const schemaAlta = schema.extend({
+  tutorNombre: z.string().trim().min(1, 'Ingresá el nombre del tutor.'),
+  tutorDni: z.string().trim().min(1, 'Ingresá el DNI del tutor.'),
+  tutorVinculo: z.string().trim().min(1, 'Ingresá el vínculo con el paciente.'),
+  consentimiento: z.boolean().refine(valor => valor, 'Confirmá el consentimiento del tutor para guardar.'),
+})
+
+export type PacienteAltaData = z.infer<typeof schemaAlta>

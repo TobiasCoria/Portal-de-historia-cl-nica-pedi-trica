@@ -70,6 +70,13 @@ export default async function FichaPacientePage({
           </div>
         </div>
 
+        <section className="card mb-6 text-sm">
+          <h2 className="mb-2 text-lg">Consentimiento del tutor</h2>
+          <p>Tutor: {paciente.tutorNombre || 'Sin registrar'} · Vínculo: {paciente.tutorVinculo || 'Sin registrar'}</p>
+          {paciente.consentimientoAt ? <p>Registrado el {paciente.consentimientoAt.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })} por {paciente.consentimientoPor}.</p> : <p className="text-[#c99a2e]">Sin consentimiento registrado. La ficha es anterior a este control.</p>}
+          <p className="mt-2 text-[#5b6b64]">Podés adjuntar la copia firmada en Documentos.</p>
+        </section>
+
         <div className="mb-10">
           <h2 className="mb-3 text-lg font-medium">Turnos</h2>
           {turnosPendientes.length === 0 ? (

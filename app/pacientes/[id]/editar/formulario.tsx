@@ -26,6 +26,7 @@ export default function FormularioEdicion({ paciente }: { paciente: Paciente }) 
       sexo: paciente.sexo ?? undefined,
       tutorNombre: paciente.tutorNombre ?? '',
       tutorDni: paciente.tutorDni ?? '',
+      tutorVinculo: paciente.tutorVinculo ?? '',
       telefono: paciente.telefono ?? '',
       email: paciente.email ?? '',
       direccion: paciente.direccion ?? '',
@@ -79,6 +80,7 @@ export default function FormularioEdicion({ paciente }: { paciente: Paciente }) 
 
       <Campo label="Nombre del tutor"><input {...register('tutorNombre')} className="input" /></Campo>
       <Campo label="DNI del tutor"><input {...register('tutorDni')} className="input" /></Campo>
+      <Campo label="Vínculo con el paciente"><input {...register('tutorVinculo')} className="input" /></Campo>
       <Campo label="Teléfono"><input {...register('telefono')} className="input" /></Campo>
       <Campo label="Email" error={errors.email?.message}>
         <input {...register('email')} className="input" />

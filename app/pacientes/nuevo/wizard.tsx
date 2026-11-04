@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
-import { schema, type PacienteFormData as FormData } from '../schema'
+import { schemaAlta, type PacienteAltaData as FormData } from '../schema'
+import { TEXTO_CONSENTIMIENTO } from '@/lib/consentimiento'
 import { crearPaciente } from '../actions'
 
 const PASOS = [
   { titulo: 'Datos del paciente', campos: ['nombre', 'apellido', 'dni', 'fechaNac', 'sexo'] },
-  { titulo: 'Contacto y tutores', campos: ['tutorNombre', 'tutorDni', 'telefono', 'email', 'direccion', 'contactoEmergencia'] },
+  { titulo: 'Contacto y tutores', campos: ['tutorNombre', 'tutorDni', 'tutorVinculo', 'telefono', 'email', 'direccion', 'contactoEmergencia'] },
   { titulo: 'Datos médicos', campos: ['antecedentesFamiliares', 'alergias', 'pesoNacer', 'tallaNacer', 'grupoSanguineo', 'observaciones'] },
   { titulo: 'Obra social', campos: ['obraSocial', 'numeroAfiliado', 'plan', 'particular'] },
   { titulo: 'Confirmación', campos: [] },
@@ -24,14 +25,14 @@ export default function PacienteWizard() {
     register,
     trigger,
     getValues,
-    watch,
+    control,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schemaAlta),
     mode: 'onChange',
   })
 
-  const valores = watch()
+  const valores = useWatch({ control })
 
   async function siguiente() {
     const campos = [...PASOS[paso].campos] as (keyof FormData)[]
@@ -44,9 +45,10 @@ export default function PacienteWizard() {
   }
 
   async function confirmar() {
+    if (!(await trigger())) return
     setEnviando(true)
     setError(null)
-    const data = schema.parse(getValues())
+    const data = schemaAlta.parse(getValues())
     const resultado = await crearPaciente(data)
     if (resultado?.error) {
       setError(resultado.error)
@@ -97,8 +99,9 @@ export default function PacienteWizard() {
 
         {paso === 1 && (
           <>
-            <Campo label="Nombre del tutor"><input {...register('tutorNombre')} className="input" /></Campo>
-            <Campo label="DNI del tutor"><input {...register('tutorDni')} className="input" /></Campo>
+            <Campo label="Nombre del tutor" error={errors.tutorNombre?.message}><input {...register('tutorNombre')} className="input" /></Campo>
+            <Campo label="DNI del tutor" error={errors.tutorDni?.message}><input {...register('tutorDni')} className="input" /></Campo>
+            <Campo label="Vínculo con el paciente" error={errors.tutorVinculo?.message}><input {...register('tutorVinculo')} className="input" /></Campo>
             <Campo label="Teléfono"><input {...register('telefono')} className="input" /></Campo>
             <Campo label="Email" error={errors.email?.message}>
               <input {...register('email')} className="input" />
@@ -146,6 +149,14 @@ export default function PacienteWizard() {
             <p><strong>Teléfono:</strong> {valores.telefono || '—'}</p>
             <p><strong>Alergias:</strong> {valores.alergias || '—'}</p>
             <p><strong>Obra social:</strong> {valores.obraSocial || (valores.particular ? 'Particular' : '—')}</p>
+            <p><strong>Vínculo:</strong> {valores.tutorVinculo || '—'}</p>
+            <p className="pt-3 text-[#5b6b64]">{TEXTO_CONSENTIMIENTO}</p>
+            <p className="text-xs text-[#5b6b64]">Texto pendiente de revisión legal. Adjuntá la copia firmada en Documentos después de guardar.</p>
+            <label className="flex items-start gap-2 pt-2">
+              <input type="checkbox" {...register('consentimiento')} className="mt-1" />
+              Confirmo que el tutor prestó el consentimiento indicado.
+            </label>
+            {errors.consentimiento && <p role="alert" className="text-red-700">{errors.consentimiento.message}</p>}
             <p className="pt-2 text-[#5b6b64]">Revisá los datos. Podés volver a cualquier paso para corregir.</p>
           </div>
         )}

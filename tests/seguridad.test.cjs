@@ -109,3 +109,46 @@ test('la secretaria no puede acceder a auditoría aunque abra la ruta directamen
   })
   await assert.rejects(auth.requireDoctora(), /404/)
 })
+
+const altaValida = {
+  nombre: 'Paciente ficticio', apellido: 'Prueba', dni: '90000001', fechaNac: '2020-01-01',
+  tutorNombre: 'Tutor ficticio', tutorDni: '90000002', tutorVinculo: 'Madre', consentimiento: true,
+}
+
+test('el servidor rechaza el alta sin consentimiento y no escribe datos', async () => {
+  const e = entorno()
+  let escribio = false
+  e.mocks['@/lib/auditoria'] = { mutarConAuditoria: async () => { escribio = true } }
+  const acciones = cargar('app/pacientes/actions.ts', e.mocks)
+  for (const consentimiento of [false, undefined, 'true']) {
+    const resultado = await acciones.crearPaciente({ ...altaValida, consentimiento })
+    assert.ok(resultado.error)
+  }
+  assert.equal(escribio, false)
+})
+
+test('fecha y responsable del consentimiento se obtienen del servidor, ignorando valores del navegador', async () => {
+  const e = entorno()
+  let guardado
+  e.mocks['@/lib/auditoria'] = { mutarConAuditoria: async (_entidad, _accion, _campos, mutacion) =>
+    mutacion({ paciente: { create: async ({ data }) => { guardado = data; return { ...data, id: 'nuevo' } } } }) }
+  const acciones = cargar('app/pacientes/actions.ts', e.mocks)
+  const antes = Date.now()
+  await assert.rejects(acciones.crearPaciente({ ...altaValida, consentimientoAt: '1999-01-01', consentimientoPor: 'cuenta-falsa', eliminadoEn: '1999-01-01' }), /redirect/)
+  assert.equal(guardado.consentimientoPor, 'cuenta-validada@example.test')
+  assert.ok(guardado.consentimientoAt.getTime() >= antes)
+  assert.equal(guardado.eliminadoEn, undefined)
+  assert.equal(guardado.consentimiento, undefined)
+})
+
+test('editar una ficha no permite reescribir el consentimiento desde el navegador', async () => {
+  const e = entorno()
+  let guardado
+  e.mocks['@/lib/auditoria'] = { mutarConAuditoria: async (_entidad, _accion, _campos, mutacion) =>
+    mutacion({ paciente: { update: async ({ data }) => { guardado = data; return { ...data, id: 'existente' } } } }) }
+  await assert.rejects(cargar('app/pacientes/actions.ts', e.mocks).actualizarPaciente('existente', {
+    ...altaValida, consentimientoAt: '1999-01-01', consentimientoPor: 'cuenta-falsa',
+  }), /redirect/)
+  assert.equal(guardado.consentimientoAt, undefined)
+  assert.equal(guardado.consentimientoPor, undefined)
+})
