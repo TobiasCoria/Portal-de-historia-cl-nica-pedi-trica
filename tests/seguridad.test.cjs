@@ -1,33 +1,8 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- El cargador CommonJS aísla las dependencias de servidor en las pruebas. */
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
-const vm = require('node:vm')
-const ts = require('typescript')
 
-// Ejecuta los módulos reales con sesión, base y Storage simulados; no usa la base compartida.
-function cargar(archivo, mocks, cache = new Map()) {
-  const absoluto = path.resolve(archivo)
-  if (cache.has(absoluto)) return cache.get(absoluto).exports
-  const loadedModule = { exports: {} }
-  cache.set(absoluto, loadedModule)
-  const codigo = ts.transpileModule(fs.readFileSync(absoluto, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-  }).outputText
-  const importar = nombre => {
-    if (Object.hasOwn(mocks, nombre)) return mocks[nombre]
-    if (nombre === 'server-only') return {}
-    if (nombre.startsWith('@/')) return cargar(`${nombre.slice(2)}.ts`, mocks, cache)
-    if (nombre.startsWith('.')) return cargar(path.resolve(path.dirname(absoluto), `${nombre}.ts`), mocks, cache)
-    return require(nombre)
-  }
-  vm.runInNewContext(`(function(require,module,exports){${codigo}\n})`, {
-    Date, File, FormData, crypto, window: mocks.$window,
-    setTimeout: mocks.$setTimeout || setTimeout, clearTimeout,
-  })(importar, loadedModule, loadedModule.exports)
-  return loadedModule.exports
-}
+const { cargar } = require('./cargar-modulo.cjs')
 
 function entorno({ fallaLog = false, sesion = true } = {}) {
   let estado = { consulta: { id: 'consulta-1', pacienteId: 'paciente-1', eliminadoEn: null }, logs: [] }
@@ -152,7 +127,7 @@ test('editar una ficha no permite reescribir el consentimiento desde el navegado
     mutacion({ paciente: { update: async ({ data }) => { guardado = data; return { ...data, id: 'existente' } } } }) }
   await assert.rejects(cargar('app/pacientes/actions.ts', e.mocks).actualizarPaciente('existente', {
     ...altaValida, consentimientoAt: '1999-01-01', consentimientoPor: 'cuenta-falsa',
-  }), /redirect/)
+  }, new Date().toISOString()), /redirect/)
   assert.equal(guardado.consentimientoAt, undefined)
   assert.equal(guardado.consentimientoPor, undefined)
 })
@@ -172,13 +147,21 @@ function formularioLogin(signInWithPassword, timeoutInmediato = false) {
     ...(timeoutInmediato ? { $setTimeout: callback => { queueMicrotask(callback); return undefined } } : {}),
   }
   const pagina = cargar('app/login/page.tsx', mocks).default()
-  return { enviar: () => pagina.props.children.props.onSubmit({ preventDefault() {} }), estados, destino: () => destino }
+  function buscarFormulario(node) {
+    if (!node || typeof node !== 'object') return null
+    if (node.type === 'form') return node
+    const hijos = Array.isArray(node.props?.children) ? node.props.children : [node.props?.children]
+    for (const h of hijos) { const f = buscarFormulario(h); if (f) return f }
+    return null
+  }
+  const form = buscarFormulario(pagina)
+  return { enviar: () => form.props.onSubmit({ preventDefault() {} }), estados, destino: () => destino }
 }
 
 test('el login autentica y navega sin depender de escrituras de perfil', async () => {
   const f = formularioLogin(async () => ({ error: null }))
   await f.enviar()
-  assert.equal(f.destino(), '/pacientes')
+  assert.equal(f.destino(), '/hoy')
   assert.equal(f.estados[3], false)
 })
 
@@ -195,4 +178,120 @@ test('una solicitud que no responde libera el botón al agotar el tiempo', async
   await f.enviar()
   assert.match(f.estados[2], /tardando demasiado/)
   assert.equal(f.estados[3], false)
+})
+
+function sesionReal(email) {
+  return {
+    '@/lib/supabase/server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { email } } }) } }) },
+    'next/navigation': { notFound() { throw new Error('404') }, redirect() { throw new Error('login') } },
+  }
+}
+
+test('una cuenta autenticada ajena al consultorio no está autorizada', async () => {
+  await assert.rejects(cargar('lib/auth.ts', sesionReal('cuenta-ajena@example.invalid')).requireUser(), /404/)
+})
+
+test('la secretaria no puede invocar acciones clínicas, restaurar registros ni exportar PDF', async () => {
+  const mocks = sesionReal('secretaria@gmail.com')
+  mocks['@/lib/prisma'] = new Proxy({}, { get() { throw new Error('No se debe consultar la base') } })
+  for (const [archivo, funcion, args] of [
+    ['app/pacientes/[id]/consultas/actions.ts', 'crearConsulta', ['paciente', { motivo: 'Intento' }]],
+    ['app/pacientes/[id]/vacunas/actions.ts', 'crearVacuna', ['paciente', { nombre: 'Intento' }]],
+    ['lib/documentos.ts', 'obtenerUrlDocumento', ['documento']],
+    ['app/archivo/actions.ts', 'restaurarRegistro', ['Paciente', 'paciente']],
+    ['app/pacientes/[id]/exportar/route.ts', 'GET', [null, { params: Promise.resolve({ id: 'paciente' }) }]],
+  ]) {
+    await assert.rejects(cargar(archivo, { ...mocks, 'next/cache': { revalidatePath() {} } })[funcion](...args), /404/)
+  }
+})
+
+test('la agenda de secretaria no consulta vacunas ni selecciona alergias', async () => {
+  const e = entorno()
+  let consultaTurnos, vacunas = false
+  e.mocks['@/lib/auth'] = { requireUser: async () => ({ email: 'secretaria@gmail.com', rol: 'SECRETARIA' }) }
+  e.mocks['@/lib/prisma'] = { prisma: {
+    turno: { findMany: async query => { consultaTurnos = query; return [] } },
+    vacunaAplicada: { findMany: async () => { vacunas = true; return [] } },
+  } }
+  await cargar('lib/agenda-vista.ts', e.mocks).leerAgenda('2026-11-04')
+  assert.equal(vacunas, false)
+  assert.equal(consultaTurnos.include.paciente.select.alergias, false)
+  assert.equal(consultaTurnos.include.paciente.select.observaciones, undefined)
+  await cargar('lib/agenda.ts', e.mocks).obtenerAgendaProxima()
+  assert.equal(vacunas, false)
+  assert.notEqual(consultaTurnos.include.paciente, true)
+  assert.equal(consultaTurnos.include.paciente.select.alergias, undefined)
+})
+
+test('la edición administrativa ignora campos clínicos enviados por la secretaria', async () => {
+  const e = entorno()
+  e.mocks['@/lib/auth'] = { requireUser: async () => ({ email: 'secretaria@gmail.com', rol: 'SECRETARIA' }) }
+  let guardado
+  e.mocks['@/lib/auditoria'] = { mutarConAuditoria: async (_e, _a, _c, fn) => fn({ paciente: { update: async ({ data, where }) => { guardado = data; assert.ok(where.actualizadoEn); return { ...data, id: 'id' } } } }) }
+  await assert.rejects(cargar('app/pacientes/actions.ts', e.mocks).actualizarPaciente('id', { ...altaValida, alergias: 'No debe guardarse', observaciones: 'Tampoco', pesoNacer: 3.2 }, new Date().toISOString()), /redirect/)
+  assert.equal(guardado.alergias, undefined)
+  assert.equal(guardado.observaciones, undefined)
+  assert.equal(guardado.pesoNacer, undefined)
+  assert.equal(guardado.tutorNombre, altaValida.tutorNombre)
+})
+
+test('rectificar conserva snapshot, responsable, motivo y versión anterior', async () => {
+  const e = entorno()
+  let revision, cambio
+  const anterior = { id: 'consulta', pacienteId: 'paciente', version: 2, motivo: 'Anterior', diagnostico: 'Previo', tratamiento: null, peso: 12, talla: 88, observaciones: null }
+  e.mocks['@/lib/auditoria'] = { mutarConAuditoria: async (_e, _a, _c, fn) => fn({
+    consulta: { findFirstOrThrow: async () => anterior, updateMany: async q => { cambio = q; return { count: 1 } }, findUniqueOrThrow: async () => ({ ...anterior, version: 3 }) },
+    consultaRevision: { create: async ({ data }) => { revision = data } },
+  }) }
+  await assert.rejects(cargar('app/pacientes/[id]/consultas/actions.ts', e.mocks).actualizarConsulta('paciente', 'consulta', { motivo: 'Corregido' }, 2, 'Corrección de prueba'), /redirect/)
+  assert.equal(revision.snapshot.motivo, 'Anterior')
+  assert.equal(revision.snapshot.diagnostico, 'Previo')
+  assert.equal(revision.usuarioEmail, 'cuenta-validada@example.test')
+  assert.equal(revision.version, 2)
+  assert.equal(revision.motivo, 'Corrección de prueba')
+  assert.equal(cambio.where.version, 2)
+  assert.equal(cambio.data.version.increment, 1)
+  assert.equal(cambio.data.diagnostico, null)
+  assert.equal(cambio.data.peso, null)
+})
+
+test('una rectificación sobre una versión vieja se rechaza sin escribir', async () => {
+  const e = entorno()
+  let escribio = false
+  e.mocks['@/lib/auditoria'] = { mutarConAuditoria: async (_e, _a, _c, fn) => fn({ consulta: {
+    findFirstOrThrow: async () => ({ version: 4 }), updateMany: async () => { escribio = true },
+  } }) }
+  const r = await cargar('app/pacientes/[id]/consultas/actions.ts', e.mocks).actualizarConsulta('paciente', 'consulta', { motivo: 'Intento' }, 3, 'Motivo de prueba')
+  assert.match(r.error, /cambió/)
+  assert.equal(escribio, false)
+})
+
+test('se rechazan vacunas sin fechas, números en cero y nacimientos futuros', () => {
+  const v = cargar('lib/validaciones.ts', {})
+  assert.equal(v.vacunaSchema.safeParse({ nombre: 'Ejemplo' }).success, false)
+  assert.equal(v.vacunaSchema.safeParse({ nombre: 'Ejemplo', fechaProgramada: '2026-02-30' }).success, false)
+  const { schema } = cargar('app/pacientes/schema.ts', {})
+  assert.equal(schema.safeParse({ ...altaValida, pesoNacer: 0 }).success, false)
+  assert.equal(schema.safeParse({ ...altaValida, fechaNac: '2099-01-01' }).success, false)
+  assert.equal(schema.safeParse({ ...altaValida, pesoNacer: undefined, sexo: undefined }).success, true)
+})
+
+test('los horarios se comparan en Argentina y los turnos adyacentes no se superponen', async () => {
+  const { verificarHorario } = cargar('lib/horarios.ts', {})
+  const tx = { turno: { findMany: async () => [{ fecha: new Date('2026-11-04T09:00:00-03:00'), duracion: 30 }] } }
+  await assert.rejects(verificarHorario(tx, new Date('2026-11-04T09:15:00-03:00'), 30), /superpone/)
+  await verificarHorario(tx, new Date('2026-11-04T09:30:00-03:00'), 30)
+  const f = cargar('lib/fechas.ts', {})
+  assert.equal(f.inputFechaHora(new Date('2026-11-04T12:00:00Z')), '2026-11-04T09:00')
+})
+
+test('el generador PDF conserva textos extensos en varias páginas válidas', async () => {
+  const { crearPdf } = cargar('lib/pdf.ts', {})
+  const bytes = await crearPdf({ titulo: 'Historia clínica pediátrica', profesional: 'Profesional de demostración', matricula: null,
+    paciente: 'Niña ficticia · Demostración', dni: 'DEMO-001', nacimiento: '2020-01-01', demo: true,
+    secciones: [{ titulo: 'Consulta de ejemplo', campos: [{ etiqueta: 'Observaciones', valor: 'Texto ficticio con ñ y acentos. '.repeat(1200) }] }],
+  })
+  const doc = await require('pdf-lib').PDFDocument.load(bytes)
+  assert.ok(doc.getPageCount() > 1)
+  assert.equal(doc.getTitle(), 'Historia clínica pediátrica')
 })

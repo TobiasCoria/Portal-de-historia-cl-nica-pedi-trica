@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "node --test tests/seguridad.test.cjs",
+    "seed:demo": "node scripts/sembrar-demo.cjs --confirmar-demo"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
