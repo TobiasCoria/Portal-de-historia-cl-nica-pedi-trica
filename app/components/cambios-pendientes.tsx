@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef } from 'react'
-export default function CambiosPendientes() {
+export default function CambiosPendientes({ guardado = 0 }: { guardado?: number }) {
   const ref = useRef<HTMLSpanElement>(null)
   useEffect(() => {
     const formulario = ref.current?.closest('form') || ref.current?.parentElement
@@ -18,6 +18,6 @@ export default function CambiosPendientes() {
     window.addEventListener('beforeunload', salir)
     document.addEventListener('click', enlaces, true)
     return () => { formulario.removeEventListener('input', marcar); formulario.removeEventListener('change', marcar); window.removeEventListener('beforeunload', salir); document.removeEventListener('click', enlaces, true) }
-  }, [])
+  }, [guardado])
   return <span ref={ref} className="screen-reader">Se te avisará si salís con cambios sin guardar.</span>
 }
