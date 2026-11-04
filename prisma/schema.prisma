@@ -30,7 +30,6 @@ model Usuario {
   activo        Boolean  @default(true)
 
   consultasCreadas Consulta[]       @relation("CreadoPor")
-  logs             LogAuditoria[]
 }
 
 model Paciente {
@@ -73,7 +72,6 @@ model Paciente {
 
   consultas     Consulta[]
   vacunas       VacunaAplicada[]
-  logs          LogAuditoria[]
   documentos    Documento[]
   turnos        Turno[]
 }
@@ -128,15 +126,18 @@ model Documento {
 }
 
 model LogAuditoria {
-  id            String   @id @default(uuid())
-  usuarioId     String
-  usuario       Usuario  @relation(fields: [usuarioId], references: [id])
-  pacienteId    String?
-  paciente      Paciente? @relation(fields: [pacienteId], references: [id])
+  id String @id @default(uuid())
+  usuarioEmail String
+  usuarioIdLegado String?
+  accion String
+  entidad String
+  entidadId String
+  pacienteId String?
+  detalle String?
+  fecha DateTime @default(now())
 
-  accion        String   // "crear_paciente", "editar_consulta", "eliminar_paciente", etc.
-  detalle       String?  // qué cambió, en texto o JSON
-  creadoEn      DateTime @default(now())
+  @@index([fecha, id])
+  @@index([pacienteId, fecha])
 }
 
 model Perfil {
