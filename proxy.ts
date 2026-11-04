@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -28,8 +28,10 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Si no hay usuario logueado y no está en /login, lo mandamos a /login
-  if (!user && !request.nextUrl.pathname.startsWith('/login')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  if (!user && request.nextUrl.pathname !== '/login') {
+    const destino = NextResponse.redirect(new URL('/login', request.url))
+    response.cookies.getAll().forEach(cookie => destino.cookies.set(cookie))
+    return destino
   }
 
   return response
