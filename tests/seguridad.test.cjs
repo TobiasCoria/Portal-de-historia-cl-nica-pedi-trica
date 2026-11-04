@@ -219,8 +219,8 @@ test('la agenda de secretaria no consulta vacunas ni selecciona alergias', async
   assert.equal(consultaTurnos.include.paciente.select.observaciones, undefined)
   await cargar('lib/agenda.ts', e.mocks).obtenerAgendaProxima()
   assert.equal(vacunas, false)
-  assert.notEqual(consultaTurnos.include.paciente, true)
-  assert.equal(consultaTurnos.include.paciente.select.alergias, undefined)
+  assert.notEqual(consultaTurnos.select.paciente, true)
+  assert.equal(consultaTurnos.select.paciente.select.alergias, undefined)
 })
 
 test('la edición administrativa ignora campos clínicos enviados por la secretaria', async () => {

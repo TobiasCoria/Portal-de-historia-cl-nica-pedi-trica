@@ -1,0 +1,42 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Verificación local con navegador temporal, sin ingresar contraseñas. */
+const { chromium } = require('playwright')
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+
+async function ejecutar() {
+  const browser = await chromium.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true })
+  try {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'no-preference' })
+    const page = await context.newPage()
+    await page.goto('http://localhost:3000/login', { waitUntil: 'networkidle' })
+    const boton = page.getByRole('button', { name: /Doctora/ })
+    await boton.hover()
+    await page.waitForTimeout(200)
+    assert.notEqual(await boton.evaluate(e => getComputedStyle(e).transform), 'none')
+    await boton.click()
+    assert.ok(await page.locator('.press-feedback').count(), 'La pulsación debe dar una respuesta visible')
+    await page.waitForTimeout(550)
+    assert.equal(await page.locator('.press-feedback').count(), 0, 'La respuesta visual debe limpiarse')
+    const documentos = []
+    page.on('request', r => { if (r.isNavigationRequest() && r.frame() === page.mainFrame()) documentos.push(r.url()) })
+    await page.getByRole('link', { name: 'Olvidé mi contraseña' }).click()
+    await page.waitForURL('**/recuperar-clave')
+    assert.equal(documentos.length, 0, 'El enlace debe navegar sin recargar todo el documento')
+    await page.goto('http://localhost:3000/login', { waitUntil: 'networkidle' })
+    await page.getByRole('button', { name: /Secretaria/ }).focus()
+    await page.keyboard.press('Enter')
+    assert.ok(await page.getByLabel('Contraseña', { exact: true }).isVisible(), 'El teclado debe seguir activando los botones')
+    const reducido = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
+    const mobile = await reducido.newPage()
+    await mobile.goto('http://localhost:3000/login', { waitUntil: 'networkidle' })
+    assert.equal(await mobile.locator('.login-form-inner').evaluate(e => getComputedStyle(e).animationName), 'none')
+    await mobile.getByRole('button', { name: /Doctora/ }).click()
+    assert.equal(await mobile.locator('.press-feedback').count(), 0, 'Movimiento reducido no debe generar ondas')
+    assert.ok(await mobile.getByLabel('Contraseña', { exact: true }).isVisible())
+    fs.mkdirSync('artifacts/qa', { recursive: true })
+    await mobile.screenshot({ path: 'artifacts/qa/movimiento-reducido-390.png', fullPage: true })
+    console.log('Movimiento verificado: hover, pulsación, limpieza de ondas, teclado, navegación sin recarga y preferencia de movimiento reducido. No se enviaron credenciales ni formularios de recuperación.')
+    await context.close(); await reducido.close()
+  } finally { await browser.close() }
+}
+ejecutar().catch(e => { console.error(e.message); process.exitCode = 1 })

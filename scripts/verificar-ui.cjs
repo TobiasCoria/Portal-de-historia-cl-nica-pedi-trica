@@ -33,12 +33,13 @@ function mocks(ruta) {
       paciente: { findUnique: async () => paciente, findFirst: async () => paciente, findMany: async () => personas, count: async () => 5 },
       consulta: { findMany: async () => [consulta], count: async () => 1, findFirst: async () => consulta },
       documento: { findMany: async () => [] },
-      vacunaAplicada: { findMany: async q => q.where?.fechaAplicada === null ? [{ ...vacuna, fechaAplicada: null, fechaProgramada: new Date(hoy) }] : [vacuna] },
-      turno: { findMany: async () => turnos }, perfil: { findUnique: async () => ({ nombre: 'Doctora · demostración', matricula: null }) },
+      vacunaAplicada: { count: async () => 1, findMany: async q => q.where?.fechaAplicada === null ? [{ ...vacuna, fechaAplicada: null, fechaProgramada: new Date(hoy) }] : [vacuna] },
+      turno: { findMany: async () => turnos, count: async () => 3 }, perfil: { findUnique: async () => ({ nombre: 'Doctora · demostración', matricula: null }) },
       logAuditoria: { findMany: async () => [] },
     } },
     'next/navigation': { usePathname: () => ruta, useRouter: () => ({ push() {}, refresh() {} }), notFound() { throw new Error('404') } },
-    'next/link': { default: ({ href, children, prefetch: _p, ...props }) => { void _p; return React.createElement('a', { href, ...props }, children) } },
+    'next/form': { default: ({ children, ...props }) => React.createElement('form', props, children) },
+    'next/link': { useLinkStatus: () => ({ pending: false }), default: ({ href, children, prefetch: _p, ...props }) => { void _p; return React.createElement('a', { href, ...props }, children) } },
     'next/cache': { revalidatePath() {} },
   }
 }

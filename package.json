@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
-    "test": "node --test tests/seguridad.test.cjs",
+    "test": "node --test tests/seguridad.test.cjs tests/rendimiento.test.cjs",
     "seed:demo": "node scripts/sembrar-demo.cjs --confirmar-demo"
   },
   "dependencies": {
