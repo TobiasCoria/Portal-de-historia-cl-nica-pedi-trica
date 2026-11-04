@@ -1,8 +1,12 @@
 import { Prisma } from '@prisma/client'
+import { ZodError } from 'zod'
 
 export function mensajeError(error: unknown): string {
+  if (error instanceof ZodError) return error.issues[0]?.message || 'Revisá los datos ingresados.'
+  if (error instanceof Error && error.message.startsWith('USUARIO:')) return error.message.slice(8)
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     // Violación de campo único (ej: DNI repetido)
+    if (error.code === 'P2034') return 'Otra operación se completó al mismo tiempo. Recargá y volvé a intentar.'
     if (error.code === 'P2002') {
       const campo = (error.meta?.target as string[])?.[0]
       if (campo === 'dni') return 'Ya existe un paciente con ese DNI.'

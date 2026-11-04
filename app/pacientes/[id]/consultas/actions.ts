@@ -4,6 +4,7 @@ import { mutarConAuditoria, registrarAuditoria } from '@/lib/auditoria'
 
 import { consultaSchema } from '@/lib/validaciones'
 
+import { z } from 'zod'
 import { requireRole } from '@/lib/auth'
 import { requirePaciente } from '@/lib/registros'
 import { revalidatePath } from 'next/cache'
@@ -19,10 +20,11 @@ export async function crearConsulta(pacienteId: string, data: {
   observaciones?: string
 }, turnoId?: string) {
   const user = await requireRole('DOCTORA')
-  data = consultaSchema.parse(data)
+  try {
+data = consultaSchema.parse(data)
   await requirePaciente(pacienteId)
   await mutarConAuditoria('Consulta', 'ALTA', Object.keys(data), async (tx) => {
-    const consulta = await tx.consulta.create({ data: { ...data, pacienteId } })
+    const consulta = await tx.consulta.create({ data: { ...data, pacienteId, autorEmail: user.email } })
     if (turnoId) {
       const turno = await tx.turno.update({ where: { id: turnoId, pacienteId, estado: 'PENDIENTE' }, data: { estado: 'ATENDIDO', consultaId: consulta.id } })
       await registrarAuditoria(tx, user.email!, { entidad: 'Turno', accion: 'ATENCION', entidadId: turno.id, pacienteId, campos: ['estado', 'consultaId'] })
@@ -30,6 +32,8 @@ export async function crearConsulta(pacienteId: string, data: {
     return consulta
   })
 
+  
+  } catch (error) { return { error: mensajeError(error) } }
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
@@ -45,12 +49,22 @@ export async function actualizarConsulta(pacienteId: string, id: string, data: {
   peso?: number
   talla?: number
   observaciones?: string
-}): Promise<{ error: string } | void> {
-  await requireRole('DOCTORA')
-  data = consultaSchema.parse(data)
+}, version = -1, motivoCambio = ''): Promise<{ error: string } | void> {
+  const user = await requireRole('DOCTORA')
   await requirePaciente(pacienteId)
   try {
-    await mutarConAuditoria('Consulta', 'EDICION', Object.keys(data), tx => tx.consulta.update({ where: { id, pacienteId, eliminadoEn: null }, data }))
+    data = consultaSchema.parse(data)
+    const motivo = z.string().trim().min(5, 'Explicá el motivo de la rectificación (al menos 5 caracteres).').parse(motivoCambio)
+    z.number().int().nonnegative().parse(version)
+    await mutarConAuditoria('Consulta', 'EDICION', Object.keys(data), async tx => {
+      const anterior = await tx.consulta.findFirstOrThrow({ where: { id, pacienteId, eliminadoEn: null } })
+      if (anterior.version !== version) throw new Error('USUARIO:La consulta cambió desde que la abriste. Recargá para revisar la última versión.')
+      const cambio = await tx.consulta.updateMany({ where: { id, pacienteId, eliminadoEn: null, version }, data: { ...data, version: { increment: 1 } } })
+      if (cambio.count !== 1) throw new Error('USUARIO:Otra persona modificó la consulta. Recargá antes de guardar.')
+      const { motivo: motivoAnterior, diagnostico, tratamiento, peso, talla, observaciones } = anterior
+      await tx.consultaRevision.create({ data: { consultaId: id, usuarioEmail: user.email!, motivo, version, snapshot: { motivo: motivoAnterior, diagnostico, tratamiento, peso, talla, observaciones } } })
+      return tx.consulta.findUniqueOrThrow({ where: { id } })
+    })
   } catch (error) {
     return { error: mensajeError(error) }
   }

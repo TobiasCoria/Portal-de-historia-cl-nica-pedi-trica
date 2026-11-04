@@ -21,6 +21,8 @@ export default function FormularioEdicionVacuna({
   const [error, setError] = useState<string | null>(null)
 
   async function onSubmit(formData: FormData) {
+    try {
+
     setEnviando(true)
     setError(null)
     const resultado = await actualizarVacuna(pacienteId, vacuna.id, {
@@ -34,6 +36,9 @@ export default function FormularioEdicionVacuna({
       setError(resultado.error)
       setEnviando(false)
     }
+  
+    } catch { setError('No se pudo guardar. Revisá los datos y volvé a intentar.') }
+    finally { setEnviando(false) }
   }
 
   return (

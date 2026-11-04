@@ -18,7 +18,8 @@ export async function crearVacuna(pacienteId: string, data: {
   observaciones?: string
 }) {
   await requireRole('DOCTORA')
-  data = vacunaSchema.parse(data)
+  try {
+data = vacunaSchema.parse(data)
   await requirePaciente(pacienteId)
   await mutarConAuditoria('VacunaAplicada', 'ALTA', Object.keys(data), tx => tx.vacunaAplicada.create({
     data: {
@@ -31,6 +32,8 @@ export async function crearVacuna(pacienteId: string, data: {
     },
   }))
 
+  
+  } catch (error) { return { error: mensajeError(error) } }
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
@@ -45,7 +48,8 @@ export async function crearVacunaConProxima(pacienteId: string, data: {
   proximaFecha?: string
 }) {
   await requireRole('DOCTORA')
-  data = vacunaConProximaSchema.parse(data)
+  try {
+data = vacunaConProximaSchema.parse(data)
   await requirePaciente(pacienteId)
   const user = await requireRole('DOCTORA')
   await mutarConAuditoria('VacunaAplicada', 'ALTA', ['nombre', 'dosis', 'fechaAplicada', 'observaciones'], async tx => {
@@ -63,6 +67,8 @@ export async function crearVacunaConProxima(pacienteId: string, data: {
     return aplicada
   })
 
+  
+  } catch (error) { return { error: mensajeError(error) } }
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)

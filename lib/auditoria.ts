@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/auth'
 
 type Entidad = 'Paciente' | 'Consulta' | 'VacunaAplicada' | 'Turno' | 'Documento' | 'Perfil'
-type Accion = 'ALTA' | 'EDICION' | 'BAJA' | 'CANCELACION' | 'SUBIDA' | 'APERTURA' | 'ATENCION'
+type Accion = 'ALTA' | 'EDICION' | 'BAJA' | 'CANCELACION' | 'SUBIDA' | 'APERTURA' | 'ATENCION' | 'RESTAURACION' | 'EXPORTACION' | 'CONSENTIMIENTO'
 type Evento = { accion: Accion; entidad: Entidad; entidadId: string; pacienteId?: string; campos: string[] }
 
 // El llamador entrega nombres de campos validados, nunca valores del formulario.
@@ -27,5 +27,5 @@ export async function mutarConAuditoria<T extends { id: string; pacienteId?: str
       pacienteId: entidad === 'Paciente' ? registro.id : registro.pacienteId, campos,
     })
     return registro
-  })
+  }, { isolationLevel: 'Serializable' })
 }

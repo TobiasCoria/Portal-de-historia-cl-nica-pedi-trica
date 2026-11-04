@@ -7,10 +7,13 @@ import { crearVacuna, crearVacunaConProxima } from '../actions'
 
 export default function FormularioVacuna({ pacienteId }: { pacienteId: string }) {
   const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [programarProxima, setProgramarProxima] = useState(false)
   const router = useRouter()
 
   async function onSubmit(formData: FormData) {
+    try {
+
     setEnviando(true)
 
     const fechaAplicada = formData.get('fechaAplicada') as string
@@ -19,7 +22,7 @@ export default function FormularioVacuna({ pacienteId }: { pacienteId: string })
     const observaciones = formData.get('observaciones') as string || undefined
 
     if (fechaAplicada) {
-      await crearVacunaConProxima(pacienteId, {
+      const respuesta = await crearVacunaConProxima(pacienteId, {
         nombre,
         dosis,
         fechaAplicada,
@@ -27,16 +30,21 @@ export default function FormularioVacuna({ pacienteId }: { pacienteId: string })
         proximaDosis: formData.get('proximaDosis') as string || undefined,
         proximaFecha: formData.get('proximaFecha') as string || undefined,
       })
+    if (respuesta?.error) { setError(respuesta.error); return }
     } else {
-      await crearVacuna(pacienteId, {
+      const respuesta = await crearVacuna(pacienteId, {
         nombre,
         dosis,
         fechaProgramada: formData.get('proximaFecha') as string || undefined,
         observaciones,
       })
+    if (respuesta?.error) { setError(respuesta.error); return }
     }
 
     router.push(`/pacientes/${pacienteId}`)
+  
+    } catch { setError('No se pudo guardar. Revisá los datos y volvé a intentar.') }
+    finally { setEnviando(false) }
   }
 
   return (
@@ -84,6 +92,7 @@ export default function FormularioVacuna({ pacienteId }: { pacienteId: string })
         <textarea name="observaciones" rows={2} className="input mt-1" />
       </div>
 
+      {error && <p role="alert" className="form-error">{error}</p>}
       <button type="submit" disabled={enviando} className="btn btn-primary disabled:opacity-50">
         <Check size={16} />
         {enviando ? 'Guardando...' : 'Guardar'}

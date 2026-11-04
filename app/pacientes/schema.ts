@@ -1,15 +1,12 @@
 import { z } from 'zod'
+import { fechaValida, fechaHoy } from '@/lib/fechas'
 
 export const schema = z.object({
   // Paso 1
   nombre: z.string().min(1, 'Requerido'),
   apellido: z.string().min(1, 'Requerido'),
   dni: z.string().min(1, 'Requerido'),
-  fechaNac: z.string().min(1, 'Requerido').refine((val) => {
-    const fecha = new Date(val)
-    const anio = fecha.getFullYear()
-    return anio > 1900 && anio <= new Date().getFullYear()
-  }, 'Fecha de nacimiento inválida'),
+  fechaNac: z.string().refine(v => fechaValida(v) && v >= '1901-01-01' && v <= fechaHoy(), 'Ingresá una fecha de nacimiento válida, hasta hoy.'),
   sexo: z.enum(['MASCULINO', 'FEMENINO']).optional(),
 
   // Paso 2
@@ -24,8 +21,8 @@ export const schema = z.object({
   // Paso 3
   antecedentesFamiliares: z.string().optional(),
   alergias: z.string().optional(),
-  pesoNacer: z.coerce.number().optional(),
-  tallaNacer: z.coerce.number().optional(),
+  pesoNacer: z.number().finite().positive('Ingresá un valor mayor a cero.').optional(),
+  tallaNacer: z.number().finite().positive('Ingresá un valor mayor a cero.').optional(),
   grupoSanguineo: z.string().optional(),
   observaciones: z.string().optional(),
 

@@ -71,17 +71,18 @@ export async function eliminarPaciente(id: string) {
 
 
 
-export async function actualizarPaciente(id: string, data: PacienteFormData): Promise<{ error: string } | void> {
+export async function actualizarPaciente(id: string, data: PacienteFormData, actualizadoEn?: string): Promise<{ error: string } | void> {
   const user = await requireUser()
   const parsed = schema.safeParse(data)
   if (!parsed.success) return { error: parsed.error.issues[0]?.message || 'Revisá los datos.' }
   data = parsed.data
   const { antecedentesFamiliares, alergias, pesoNacer, tallaNacer, grupoSanguineo, observaciones, ...administrativos } = data
+  if (!actualizadoEn || Number.isNaN(Date.parse(actualizadoEn))) return { error: 'Recargá la ficha antes de guardar.' }
   const datos = user.rol === 'DOCTORA' ? data : administrativos
   void antecedentesFamiliares; void alergias; void pesoNacer; void tallaNacer; void grupoSanguineo; void observaciones
   try {
     await mutarConAuditoria('Paciente', 'EDICION', Object.keys(datos), tx => tx.paciente.update({
-      where: { id, eliminadoEn: null },
+      where: { id, eliminadoEn: null, actualizadoEn: new Date(actualizadoEn) },
       data: {
         ...datos,
         fechaNac: new Date(datos.fechaNac),

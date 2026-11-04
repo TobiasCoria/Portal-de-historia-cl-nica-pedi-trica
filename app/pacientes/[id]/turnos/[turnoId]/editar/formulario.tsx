@@ -1,4 +1,5 @@
 'use client'
+import { inputFechaHora } from '@/lib/fechas'
 
 import { useState } from 'react'
 import { Check } from 'lucide-react'
@@ -22,10 +23,13 @@ export default function FormularioEdicionTurno({
   const [error, setError] = useState<string | null>(null)
 
   async function onSubmit(formData: FormData) {
+    try {
+
     setEnviando(true)
     setError(null)
     const resultado = await actualizarTurno(pacienteId, turno.id, {
       fecha: formData.get('fecha') as string,
+      duracion: Number(formData.get('duracion') || 30),
       motivo: formData.get('motivo') as string || undefined,
       observaciones: formData.get('observaciones') as string || undefined,
     })
@@ -33,6 +37,9 @@ export default function FormularioEdicionTurno({
       setError(resultado.error)
       setEnviando(false)
     }
+  
+    } catch { setError('No se pudo guardar. Revisá los datos y volvé a intentar.') }
+    finally { setEnviando(false) }
   }
 
   return (
@@ -41,6 +48,7 @@ export default function FormularioEdicionTurno({
         <label className="block text-sm font-medium text-[#1c2521]">Fecha y hora *</label>
         <input name="fecha" type="datetime-local" required defaultValue={formatoFechaHora(turno.fecha)} className="input mt-1" />
       </div>
+      <div><label className="block text-sm font-medium">Duración</label><select name="duracion" className="input mt-1" defaultValue={30}><option value={15}>15 minutos</option><option value={30}>30 minutos</option><option value={45}>45 minutos</option><option value={60}>60 minutos</option></select></div>
       <div>
         <label className="block text-sm font-medium text-[#1c2521]">Motivo</label>
         <input name="motivo" defaultValue={turno.motivo ?? ''} className="input mt-1" />

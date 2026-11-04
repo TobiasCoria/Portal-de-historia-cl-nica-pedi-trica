@@ -6,10 +6,13 @@ import { crearConsulta } from '../actions'
 
 export default function FormularioConsulta({ pacienteId, turnoId }: { pacienteId: string; turnoId?: string }) {
   const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function onSubmit(formData: FormData) {
+    try {
+
     setEnviando(true)
-    await crearConsulta(pacienteId, {
+    const respuesta = await crearConsulta(pacienteId, {
       motivo: formData.get('motivo') as string,
       diagnostico: formData.get('diagnostico') as string || undefined,
       tratamiento: formData.get('tratamiento') as string || undefined,
@@ -17,6 +20,10 @@ export default function FormularioConsulta({ pacienteId, turnoId }: { pacienteId
       talla: formData.get('talla') ? Number(formData.get('talla')) : undefined,
       observaciones: formData.get('observaciones') as string || undefined,
     }, turnoId)
+    if (respuesta?.error) { setError(respuesta.error); return }
+  
+    } catch { setError('No se pudo guardar. Revisá los datos y volvé a intentar.') }
+    finally { setEnviando(false) }
   }
 
   return (
@@ -53,6 +60,7 @@ export default function FormularioConsulta({ pacienteId, turnoId }: { pacienteId
         <textarea name="observaciones" rows={2} className="input mt-1" />
       </div>
 
+      {error && <p role="alert" className="form-error">{error}</p>}
       <button type="submit" disabled={enviando} className="btn btn-primary disabled:opacity-50">
         <Check size={16} />
         {enviando ? 'Guardando...' : 'Guardar consulta'}

@@ -45,13 +45,18 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
   })
 
   async function onSubmit(data: PacienteFormData) {
+    try {
+
     setEnviando(true)
     setError(null)
-    const resultado = await actualizarPaciente(paciente.id, data)
+    const resultado = await actualizarPaciente(paciente.id, data, new Date(paciente.actualizadoEn).toISOString())
     if (resultado?.error) {
       setError(resultado.error)
       setEnviando(false)
     }
+  
+    } catch { setError('No se pudo guardar. Revisá los datos y volvé a intentar.') }
+    finally { setEnviando(false) }
   }
 
   return (
@@ -69,7 +74,7 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
         <input type="date" {...register('fechaNac')} className="input" />
       </Campo>
       <Campo label="Sexo">
-        <select {...register('sexo')} className="input">
+        <select {...register('sexo', { setValueAs: v => v || undefined })} className="input">
           <option value="">Sin especificar</option>
           <option value="MASCULINO">Masculino</option>
           <option value="FEMENINO">Femenino</option>
@@ -98,8 +103,8 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
         <textarea {...register('alergias')} className="input" rows={2} />
       </Campo>
       <div className="grid grid-cols-2 gap-4">
-        <Campo label="Peso al nacer (kg)"><input type="number" step="0.01" {...register('pesoNacer')} className="input" /></Campo>
-        <Campo label="Talla al nacer (cm)"><input type="number" step="0.1" {...register('tallaNacer')} className="input" /></Campo>
+        <Campo label="Peso al nacer (kg)"><input type="number" step="0.01" {...register('pesoNacer', { setValueAs: v => v === '' ? undefined : Number(v) })} className="input" /></Campo>
+        <Campo label="Talla al nacer (cm)"><input type="number" step="0.1" {...register('tallaNacer', { setValueAs: v => v === '' ? undefined : Number(v) })} className="input" /></Campo>
       </div>
       <Campo label="Grupo sanguíneo"><input {...register('grupoSanguineo')} className="input" /></Campo>
       <Campo label="Observaciones"><textarea {...register('observaciones')} className="input" rows={2} /></Campo>

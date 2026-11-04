@@ -16,6 +16,8 @@ export default function FormularioEdicionConsulta({
   const [error, setError] = useState<string | null>(null)
 
   async function onSubmit(formData: FormData) {
+    try {
+
     setEnviando(true)
     setError(null)
     const resultado = await actualizarConsulta(pacienteId, consulta.id, {
@@ -25,11 +27,14 @@ export default function FormularioEdicionConsulta({
       peso: formData.get('peso') ? Number(formData.get('peso')) : undefined,
       talla: formData.get('talla') ? Number(formData.get('talla')) : undefined,
       observaciones: formData.get('observaciones') as string || undefined,
-    })
+    }, consulta.version, String(formData.get('motivoCambio') || ''))
     if (resultado?.error) {
       setError(resultado.error)
       setEnviando(false)
     }
+  
+    } catch { setError('No se pudo guardar. Revisá los datos y volvé a intentar.') }
+    finally { setEnviando(false) }
   }
 
   return (
@@ -61,6 +66,11 @@ export default function FormularioEdicionConsulta({
         <textarea name="observaciones" rows={2} defaultValue={consulta.observaciones ?? ''} className="input mt-1" />
       </div>
 
+      <div>
+        <label className="block text-sm font-medium">Motivo de la rectificación *</label>
+        <textarea name="motivoCambio" required minLength={5} rows={2} className="input mt-1" placeholder="Contá por qué necesitás corregir esta consulta." />
+        <p className="mt-2 text-xs text-[#5b6b64]">La versión anterior queda conservada en el historial.</p>
+      </div>
       {error && (
         <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
           {error}

@@ -33,6 +33,7 @@ model Usuario {
 }
 
 model Paciente {
+  esDemo Boolean @default(false)
   id            String    @id @default(uuid())
 
   // Paso 1 — Datos del paciente
@@ -80,6 +81,9 @@ model Paciente {
 }
 
 model Consulta {
+  version Int @default(0)
+  autorEmail String?
+  revisiones ConsultaRevision[]
   eliminadoEn DateTime?
   id            String   @id @default(uuid())
   pacienteId    String
@@ -144,6 +148,7 @@ model LogAuditoria {
 }
 
 model Perfil {
+  matricula String?
   rol Rol @default(SECRETARIA)
   id        String  @id @default(uuid())
   email     String  @unique
@@ -157,9 +162,11 @@ enum EstadoTurno {
   PENDIENTE
   ATENDIDO
   CANCELADO
+  AUSENTE
 }
 
 model Turno {
+  duracion Int @default(30)
   id            String      @id @default(uuid())
   pacienteId    String
   paciente      Paciente    @relation(fields: [pacienteId], references: [id])
@@ -170,4 +177,15 @@ model Turno {
   consulta      Consulta?   @relation(fields: [consultaId], references: [id])
   observaciones String?
   creadoEn      DateTime    @default(now())
+}
+model ConsultaRevision {
+  id String @id @default(uuid())
+  consultaId String
+  consulta Consulta @relation(fields: [consultaId], references: [id])
+  snapshot Json
+  usuarioEmail String
+  fecha DateTime @default(now())
+  motivo String
+  version Int
+  @@unique([consultaId, version])
 }
