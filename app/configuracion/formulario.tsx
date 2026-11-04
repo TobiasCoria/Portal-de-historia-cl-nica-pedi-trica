@@ -4,7 +4,7 @@ import { actualizarProfesional } from './actions'
 import CambiosPendientes from '@/app/components/cambios-pendientes'
 export default function FormularioProfesional({ nombre, matricula }: { nombre: string; matricula: string }) {
   const [error, setError] = useState(''), [ok, setOk] = useState(false), [enviando, setEnviando] = useState(false)
-  return <form className="card form-panel space-y-5" action={async fd => {
+  return <form aria-busy={enviando} className="card form-panel space-y-5" action={async fd => {
     setError(''); setOk(false); setEnviando(true)
     try { const r = await actualizarProfesional({ nombre: String(fd.get('nombre') || ''), matricula: String(fd.get('matricula') || '') }); if (r.error) setError(r.error); else setOk(true) }
     catch { setError('No se pudo guardar. Volvé a intentar.') }

@@ -49,7 +49,7 @@ export default function FormularioVacuna({ pacienteId }: { pacienteId: string })
   }
 
   return (
-    <form action={onSubmit} className="card space-y-4">
+    <form aria-busy={enviando} action={onSubmit} className="card space-y-4">
       <CambiosPendientes />
       <div>
         <label className="block text-sm font-medium text-[#1c2521]">Nombre de la vacuna *

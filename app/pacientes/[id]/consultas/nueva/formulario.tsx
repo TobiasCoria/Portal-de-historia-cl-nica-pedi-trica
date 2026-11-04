@@ -28,7 +28,7 @@ export default function FormularioConsulta({ pacienteId, turnoId }: { pacienteId
   }
 
   return (
-    <form action={onSubmit} className="card space-y-4">
+    <form aria-busy={enviando} action={onSubmit} className="card space-y-4">
       <CambiosPendientes />
       {turnoId && (
         <p className="rounded border border-[#e3e7e2] bg-[#fafbfa] p-3 text-sm text-[#5b6b64]">

@@ -5,7 +5,7 @@ import { TEXTO_CONSENTIMIENTO } from '@/lib/consentimiento'
 import { registrarConsentimiento } from './actions'
 export default function FormularioConsentimiento({ pacienteId }: { pacienteId: string }) {
   const [error, setError] = useState(''), [enviando, setEnviando] = useState(false), router = useRouter()
-  return <form className="card form-panel space-y-5" action={async fd => {
+  return <form aria-busy={enviando} className="card form-panel space-y-5" action={async fd => {
     setError(''); setEnviando(true)
     try { const resultado = await registrarConsentimiento(pacienteId, fd.get('confirmacion') === 'on'); if (resultado.error) setError(resultado.error); else { router.push(`/pacientes/${pacienteId}`); router.refresh() } }
     catch { setError('No se pudo registrar el consentimiento. Volvé a intentar.') }

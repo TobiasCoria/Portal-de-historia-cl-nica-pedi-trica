@@ -1,7 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import Link from 'next/link'
+import Link from '@/app/components/enlace'
 import Brand from '@/app/components/brand'
 import { createClient } from '@/lib/supabase/client'
 import { conTiempo } from '@/lib/espera'
@@ -9,7 +9,7 @@ import { conTiempo } from '@/lib/espera'
 function FormularioNuevaClave() {
   const params = useSearchParams()
   const [error, setError] = useState(params.get('error') ? 'El enlace venció o ya fue utilizado. Pedí uno nuevo.' : ''), [enviando, setEnviando] = useState(false), [ok, setOk] = useState(false)
-  return <div className="login-layout"><section className="login-story"><Brand /><div className="story-copy"><h1>Tu espacio.<br />Tu acceso seguro.</h1></div></section><section className="login-form-area"><div className="login-form-inner"><p className="eyebrow">Una nueva contraseña</p><h2>Volvé a tu consultorio</h2><p className="page-description">Elegí una contraseña de al menos ocho caracteres para tu cuenta.</p>{ok ? <div><p className="toast-message">La contraseña se actualizó. Ingresá de nuevo con tu nueva clave.</p><Link className="btn btn-primary" href="/login">Ir al ingreso</Link></div> : <form className="space-y-5" action={async fd => {
+  return <div className="login-layout"><section className="login-story"><Brand /><div className="story-copy"><h1>Tu espacio.<br />Tu acceso seguro.</h1></div></section><section className="login-form-area"><div className="login-form-inner"><p className="eyebrow">Una nueva contraseña</p><h2>Volvé a tu consultorio</h2><p className="page-description">Elegí una contraseña de al menos ocho caracteres para tu cuenta.</p>{ok ? <div><p className="toast-message">La contraseña se actualizó. Ingresá de nuevo con tu nueva clave.</p><Link className="btn btn-primary" href="/login">Ir al ingreso</Link></div> : <form aria-busy={enviando} className="space-y-5" action={async fd => {
     setError(''); setEnviando(true)
     try {
       const clave = String(fd.get('clave') || ''), confirmacion = String(fd.get('confirmacion') || '')

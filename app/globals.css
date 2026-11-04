@@ -1620,3 +1620,208 @@ body:has(.sidebar) .min-h-screen>.mx-auto {
   }
 }
 @media(max-width:1024px){.patient-hero .patient-actions{padding-left:0}}
+/* Movimiento: respuestas breves, sin bloquear la interacción ni animar medidas de layout. */
+:root {
+  --motion-fast:150ms;
+  --motion-normal:230ms;
+  --motion-ease:cubic-bezier(.2,.75,.25,1);
+}
+button,summary,a.btn,a.btn-link,a.btn-link-danger,a.action-btn,a.action-btn-danger,.nav-item,.profile-choice,.calendar-event,.patient-name {
+  transition:transform var(--motion-fast) var(--motion-ease),background-color var(--motion-fast) ease,border-color var(--motion-fast) ease,box-shadow var(--motion-fast) ease,color var(--motion-fast) ease,opacity var(--motion-fast) ease;
+  touch-action:manipulation;
+}
+button:active:not(:disabled),summary:active,.btn:active,.action-btn:active,.action-btn-danger:active,.nav-item:active,.profile-choice:active {
+  transform:scale(.97);
+}
+button svg,.btn svg,.action-btn svg,.btn-link svg,.nav-item svg,.profile-choice .initial-avatar {
+  transition:transform var(--motion-normal) var(--motion-ease),opacity var(--motion-fast) ease;
+}
+@media(hover:hover) and (pointer:fine) {
+  button:hover:not(:disabled),.btn:hover:not(:disabled),.action-btn:hover:not(:disabled),.action-btn-danger:hover:not(:disabled) {
+    transform:translateY(-1px);
+  }
+  .btn-primary:hover {
+    box-shadow:0 5px 15px #315e9125;
+  }
+  .btn-outline:hover,.action-btn:hover {
+    box-shadow:0 4px 10px #1839430b;
+  }
+  .btn-link:hover svg:last-of-type,.btn:hover svg:last-of-type,.action-btn:hover svg:last-of-type {
+    transform:translateX(2px);
+  }
+  .nav-item:hover svg {
+    transform:translateY(-1px);
+  }
+  .profile-choice:hover .initial-avatar {
+    transform:scale(1.06);
+  }
+  .calendar-event:hover {
+    transform:translateY(-2px);
+    box-shadow:0 4px 12px #1839430c;
+  }
+  .patient-name:hover {
+    color:var(--blue);
+  }
+}
+button:focus-visible,summary:focus-visible,a:focus-visible {
+  outline:2px solid var(--blue);
+  outline-offset:4px;
+}
+.input {
+  transition:border-color var(--motion-fast) ease,box-shadow var(--motion-fast) ease,background-color var(--motion-fast) ease;
+}
+input[type="checkbox"],input[type="radio"] {
+  accent-color:var(--blue);
+  transition:transform var(--motion-fast) var(--motion-ease);
+}
+input[type="checkbox"]:active,input[type="radio"]:active {
+  transform:scale(.9);
+}
+.interactive-link {
+  position:relative;
+}
+.link-wait-indicator {
+  position:absolute;
+  top:3px;
+  right:3px;
+  width:11px;
+  height:11px;
+  border:1.5px solid currentColor;
+  border-right-color:transparent;
+  border-radius:50%;
+  opacity:0;
+  pointer-events:none;
+}
+.is-link-pending {
+  animation:link-spin .65s linear infinite,indicator-in .12s ease .1s both;
+}
+.interactive-link:has(.is-link-pending) {
+  cursor:progress;
+}
+.navigation-progress {
+  position:fixed;
+  inset:0 0 auto;
+  height:3px;
+  pointer-events:none;
+  z-index:110;
+  overflow:hidden;
+  opacity:0;
+  transition:opacity 100ms ease;
+}
+.navigation-progress span {
+  display:block;
+  width:32%;
+  height:100%;
+  border-radius:2px;
+  background:linear-gradient(90deg,#89b5a3,var(--blue));
+}
+body:has(.is-link-pending) .navigation-progress {
+  opacity:1;
+}
+body:has(.is-link-pending) .navigation-progress span {
+  animation:navigation-travel 1.15s ease-in-out infinite;
+}
+.feedback-layer {
+  position:fixed;
+  inset:0;
+  z-index:105;
+  pointer-events:none;
+  overflow:hidden;
+}
+.press-feedback {
+  position:absolute;
+  display:block;
+  overflow:hidden;
+  pointer-events:none;
+}
+.press-wave {
+  position:absolute;
+  display:block;
+  background:currentColor;
+  border-radius:50%;
+  transform:translate(-50%,-50%) scale(0);
+  opacity:0;
+  will-change:transform,opacity;
+  animation:press-wave 440ms var(--motion-ease) both;
+}
+.page-enter {
+  width:100%;
+}
+.page-heading,.hero-panel,.patient-hero,.form-panel,.login-form-inner {
+  animation:content-arrive 240ms var(--motion-ease) both;
+}
+.metric-card {
+  animation:content-arrive 260ms var(--motion-ease) both;
+}
+.metric-card:nth-child(2) { animation-delay:30ms; }
+.metric-card:nth-child(3) { animation-delay:60ms; }
+.patient-tabs .active,.segmented .active {
+  transition:color var(--motion-fast) ease,border-color var(--motion-normal) ease,background-color var(--motion-fast) ease;
+}
+.dialog-backdrop {
+  animation:backdrop-arrive 140ms ease both;
+}
+.dialog-card {
+  transform-origin:50% 55%;
+  animation:dialog-arrive 200ms var(--motion-ease) both;
+}
+.mobile-account[open] .mobile-account-panel {
+  transform-origin:top right;
+  animation:dialog-arrive 160ms var(--motion-ease) both;
+}
+.form-error {
+  animation:message-arrive 180ms ease-out both;
+}
+.toast-message {
+  animation:content-arrive 200ms var(--motion-ease) both;
+}
+form[aria-busy="true"] button[type="submit"],form:has(.form-wait-indicator) button:not([type="button"]) {
+  cursor:progress;
+}
+form[aria-busy="true"] button:not([type="button"]):disabled {
+  position:relative;
+}
+form[aria-busy="true"] button[type="submit"]:disabled:after {
+  content:'';
+  position:absolute;
+  right:6px;
+  top:calc(50% - 5px);
+  width:10px;
+  height:10px;
+  border:1.5px solid currentColor;
+  border-right-color:transparent;
+  border-radius:50%;
+  animation:link-spin .7s linear infinite;
+}
+.portal-loading {
+  animation:content-arrive 160ms ease both;
+}
+.skeleton {
+  position:relative;
+  overflow:hidden;
+  background:#edf0e9;
+  border-radius:10px;
+}
+.skeleton:after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent,#ffffff80,transparent);
+  animation:skeleton-travel 1.25s ease-in-out infinite;
+}
+@keyframes link-spin { to { transform:rotate(360deg); } }
+@keyframes indicator-in { to { opacity:.8; } }
+@keyframes navigation-travel { from { transform:translateX(-110%); } to { transform:translateX(420%); } }
+@keyframes press-wave { from { transform:translate(-50%,-50%) scale(0); opacity:.19; } to { transform:translate(-50%,-50%) scale(1); opacity:0; } }
+@keyframes content-arrive { from { transform:translateY(7px); opacity:.7; } to { transform:translateY(0); opacity:1; } }
+@keyframes backdrop-arrive { from { opacity:0; } to { opacity:1; } }
+@keyframes dialog-arrive { from { transform:translateY(7px) scale(.98); opacity:.55; } to { transform:translateY(0) scale(1); opacity:1; } }
+@keyframes message-arrive { from { transform:translateY(-3px); opacity:.5; } to { transform:translateY(0); opacity:1; } }
+@keyframes skeleton-travel { from { transform:translateX(-100%); } to { transform:translateX(100%); } }
+@media(prefers-reduced-motion:reduce) {
+  *,*:before,*:after { animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+  button:hover,button:active,summary:active,.btn:hover,.btn:active,.action-btn:hover,.action-btn:active,.action-btn-danger:active,.nav-item:active,.profile-choice:active,.profile-choice:hover .initial-avatar,input:active { transform:none!important; }
+  .is-link-pending { opacity:.8; border-style:dotted; }
+  .navigation-progress span { width:100%; opacity:.6; }
+  .press-feedback { display:none; }
+}

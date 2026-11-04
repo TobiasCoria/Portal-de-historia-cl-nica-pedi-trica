@@ -1,5 +1,5 @@
 'use client'
-import Link from 'next/link'
+import Link from '@/app/components/enlace'
 import { usePathname } from 'next/navigation'
 import { Sun, Users, CalendarDays, Archive, ShieldCheck, Settings2 } from 'lucide-react'
 

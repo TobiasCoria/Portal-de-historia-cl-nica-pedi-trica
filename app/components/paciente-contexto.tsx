@@ -1,7 +1,7 @@
 import { obtenerPaciente } from '@/app/pacientes/lecturas'
 import { edad } from '@/lib/fechas'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
+import Link from '@/app/components/enlace'
 import { HeartPulse, ArrowUpRight } from 'lucide-react'
 export default async function PacienteContexto({ id }: { id: string }) {
   const p = await obtenerPaciente(id)

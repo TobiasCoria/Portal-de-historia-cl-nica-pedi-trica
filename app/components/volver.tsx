@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/app/components/enlace'
 import { ChevronLeft } from 'lucide-react'
 
 export default function Volver({ href }: { href: string }) {

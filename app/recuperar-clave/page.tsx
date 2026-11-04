@@ -1,13 +1,13 @@
 'use client'
 import { useState } from 'react'
-import Link from 'next/link'
+import Link from '@/app/components/enlace'
 import Brand from '@/app/components/brand'
 import { createClient } from '@/lib/supabase/client'
 import { PERFILES } from '@/lib/perfiles-config'
 import { conTiempo } from '@/lib/espera'
 export default function RecuperarClavePage() {
   const [enviando, setEnviando] = useState(false), [mensaje, setMensaje] = useState(''), [error, setError] = useState('')
-  return <div className="login-layout"><section className="login-story"><Brand /><div className="story-copy"><p className="eyebrow" style={{ color: '#99b9b1' }}>Volvamos a tu espacio</p><h1>Un paso para<br />seguir acompañando.</h1><p>Recuperá el acceso a tu cuenta desde el correo que usás en el consultorio.</p></div></section><section className="login-form-area"><div className="login-form-inner"><p className="eyebrow">Recuperación de acceso</p><h2>¿Olvidaste tu contraseña?</h2><p className="page-description">Ingresá el email de tu cuenta. Te vamos a enviar un enlace para elegir una nueva contraseña.</p><form className="space-y-5" action={async fd => {
+  return <div className="login-layout"><section className="login-story"><Brand /><div className="story-copy"><p className="eyebrow" style={{ color: '#99b9b1' }}>Volvamos a tu espacio</p><h1>Un paso para<br />seguir acompañando.</h1><p>Recuperá el acceso a tu cuenta desde el correo que usás en el consultorio.</p></div></section><section className="login-form-area"><div className="login-form-inner"><p className="eyebrow">Recuperación de acceso</p><h2>¿Olvidaste tu contraseña?</h2><p className="page-description">Ingresá el email de tu cuenta. Te vamos a enviar un enlace para elegir una nueva contraseña.</p><form aria-busy={enviando} className="space-y-5" action={async fd => {
     setEnviando(true); setError(''); setMensaje('')
     try {
       const email = String(fd.get('email') || '').trim().toLowerCase()

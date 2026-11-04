@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
+  const publicas = ['/login', '/recuperar-clave', '/actualizar-clave', '/auth/callback']
+  if (publicas.includes(request.nextUrl.pathname)) return response
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,11 +27,12 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // Verifica firma y vencimiento; con claves asimétricas reutiliza el JWKS.
+  // Las lecturas/acciones sensibles siguen verificando el usuario con getUser().
+  const { data, error } = await supabase.auth.getClaims()
 
   // Si no hay usuario logueado y no está en /login, lo mandamos a /login
-  const publicas = ['/login', '/recuperar-clave', '/actualizar-clave', '/auth/callback']
-  if (!user && !publicas.includes(request.nextUrl.pathname)) {
+  if (error || !data?.claims?.sub) {
     const destino = NextResponse.redirect(new URL('/login', request.url))
     response.cookies.getAll().forEach(cookie => destino.cookies.set(cookie))
     return destino

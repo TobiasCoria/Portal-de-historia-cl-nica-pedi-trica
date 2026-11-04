@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/app/components/enlace'
 import { Archive, RotateCcw } from 'lucide-react'
 import Nav from '@/app/components/nav'
 import ConfirmarEliminar from '@/app/components/confirmar-eliminar'

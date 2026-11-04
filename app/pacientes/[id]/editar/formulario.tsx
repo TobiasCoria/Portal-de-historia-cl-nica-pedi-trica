@@ -61,7 +61,7 @@ export default function FormularioEdicion({ paciente, clinico = true }: { pacien
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="card space-y-4 form-panel">
+    <form aria-busy={enviando} onSubmit={handleSubmit(onSubmit)} className="card space-y-4 form-panel">
       <CambiosPendientes />
       <h2 className="form-section-title"><span>01</span>Datos del paciente</h2>
       <Campo label="Nombre" error={errors.nombre?.message}>

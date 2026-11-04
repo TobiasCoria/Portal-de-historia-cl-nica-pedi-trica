@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/app/components/enlace'
 import { requireRole } from '@/lib/auth'
 import { obtenerPaciente } from '@/app/pacientes/lecturas'
 import { notFound } from 'next/navigation'

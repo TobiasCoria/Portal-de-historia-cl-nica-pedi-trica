@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
+import Link from '@/app/components/enlace'
 import Brand from '@/app/components/brand'
 import { ArrowRight, LockKeyhole } from 'lucide-react'
 import { PERFILES } from '@/lib/perfiles-config'
@@ -60,7 +60,7 @@ export default function LoginPage() {
     <section className="login-story"><Brand /><div className="story-copy"><p className="eyebrow" style={{ color: '#99b9b1' }}>Cada etapa merece cuidado</p><h1>Un lugar para cuidar.<br />Una historia para acompañar.</h1><p>La información que necesitás, en un espacio pensado para el ritmo de tu consultorio.</p></div><div className="login-footer">PORTAL PEDIATRÍA · HISTORIAS QUE CRECEN</div></section>
     <section className="login-form-area"><div className="login-form-inner"><p className="eyebrow">Te damos la bienvenida</p><h2>{seleccionado ? 'Ingresá a tu espacio' : '¿Quién ingresa hoy?'}</h2><p className="page-description">{seleccionado ? 'Usá la contraseña de tu cuenta para continuar.' : 'Elegí tu perfil para comenzar la jornada.'}</p>
       {!seleccionado ? <div className="profile-choices">{perfiles.map(p => <button className="profile-choice" key={p.email} onClick={() => setSeleccionado(p)}><span className={'initial-avatar ' + (p.rol === 'DOCTORA' ? 'blue' : 'pink')}>{p.nombre.charAt(0)}</span><strong>{p.nombre}</strong><ArrowRight size={14} className="text-[#8eaaa0]" /></button>)}</div> :
-      <form onSubmit={handleLogin} className="space-y-5"><div className="flex items-center justify-between rounded-xl border border-[#e0e6de] bg-white p-4"><div className="flex items-center gap-3"><span className="initial-avatar blue">{seleccionado.nombre.charAt(0)}</span><div><strong className="text-xs">{seleccionado.nombre}</strong><p className="text-[10px] text-[#8b9b94]">{seleccionado.email}</p></div></div><button type="button" disabled={loading} className="btn-link" onClick={() => { setSeleccionado(null); setPassword(''); setError('') }}>Cambiar</button></div>
+      <form aria-busy={loading} onSubmit={handleLogin} className="space-y-5"><div className="flex items-center justify-between rounded-xl border border-[#e0e6de] bg-white p-4"><div className="flex items-center gap-3"><span className="initial-avatar blue">{seleccionado.nombre.charAt(0)}</span><div><strong className="text-xs">{seleccionado.nombre}</strong><p className="text-[10px] text-[#8b9b94]">{seleccionado.email}</p></div></div><button type="button" disabled={loading} className="btn-link" onClick={() => { setSeleccionado(null); setPassword(''); setError('') }}>Cambiar</button></div>
         <div><label htmlFor="clave" className="mb-2 block text-xs">Contraseña</label><input id="clave" autoComplete="current-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoFocus className="input" /></div>
         {error && <p role="alert" className="form-error">{error}</p>}
         <button type="submit" disabled={loading} className="btn btn-primary w-full">{loading ? 'Ingresando…' : 'Ingresar al consultorio'}<ArrowRight size={15} /></button><Link href="/recuperar-clave" className="btn-link justify-center w-full">Olvidé mi contraseña</Link>

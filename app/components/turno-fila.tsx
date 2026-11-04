@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from '@/app/components/enlace'
 import { ArrowUpRight, Check, CalendarClock } from 'lucide-react'
 import { horaLocal } from '@/lib/fechas'
 import { cancelarTurno, marcarAusente } from '@/app/pacientes/[id]/turnos/actions'
