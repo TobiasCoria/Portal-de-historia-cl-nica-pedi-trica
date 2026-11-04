@@ -1,3 +1,4 @@
+import { requireRole } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import { obtenerConsulta } from '../../lecturas'
 import Nav from '@/app/components/nav'
@@ -9,6 +10,7 @@ export default async function EditarConsultaPage({
 }: {
   params: Promise<{ id: string; consultaId: string }>
 }) {
+  await requireRole('DOCTORA')
   const { id, consultaId } = await params
   const consulta = await obtenerConsulta(id, consultaId)
 

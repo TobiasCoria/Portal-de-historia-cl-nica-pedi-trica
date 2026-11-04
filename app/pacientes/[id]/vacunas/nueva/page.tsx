@@ -1,3 +1,4 @@
+import { requireRole } from '@/lib/auth'
 import Nav from '@/app/components/nav'
 import Volver from '@/app/components/volver'
 import FormularioVacuna from './formulario'
@@ -7,6 +8,7 @@ export default async function NuevaVacunaPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  await requireRole('DOCTORA')
   const { id } = await params
 
   return (

@@ -1,3 +1,4 @@
+import { requireRole } from '@/lib/auth'
 import Nav from '@/app/components/nav'
 import Volver from '@/app/components/volver'
 import FormularioConsulta from './formulario'
@@ -9,6 +10,7 @@ export default async function NuevaConsultaPage({
   params: Promise<{ id: string }>
   searchParams: Promise<{ turnoId?: string }>
 }) {
+  await requireRole('DOCTORA')
   const { id } = await params
   const { turnoId } = await searchParams
 

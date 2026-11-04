@@ -4,7 +4,7 @@ import { mutarConAuditoria, registrarAuditoria } from '@/lib/auditoria'
 
 import { consultaSchema } from '@/lib/validaciones'
 
-import { requireUser } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { requirePaciente } from '@/lib/registros'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -18,7 +18,7 @@ export async function crearConsulta(pacienteId: string, data: {
   talla?: number
   observaciones?: string
 }, turnoId?: string) {
-  const user = await requireUser()
+  const user = await requireRole('DOCTORA')
   data = consultaSchema.parse(data)
   await requirePaciente(pacienteId)
   await mutarConAuditoria('Consulta', 'ALTA', Object.keys(data), async (tx) => {
@@ -46,7 +46,7 @@ export async function actualizarConsulta(pacienteId: string, id: string, data: {
   talla?: number
   observaciones?: string
 }): Promise<{ error: string } | void> {
-  await requireUser()
+  await requireRole('DOCTORA')
   data = consultaSchema.parse(data)
   await requirePaciente(pacienteId)
   try {
@@ -62,7 +62,7 @@ export async function actualizarConsulta(pacienteId: string, id: string, data: {
 }
 
 export async function eliminarConsulta(pacienteId: string, id: string) {
-  await requireUser()
+  await requireRole('DOCTORA')
   await requirePaciente(pacienteId)
   await mutarConAuditoria('Consulta', 'BAJA', ['eliminadoEn'], tx => tx.consulta.update({ where: { id, pacienteId, eliminadoEn: null }, data: { eliminadoEn: new Date() } }))
   revalidatePath('/agenda')

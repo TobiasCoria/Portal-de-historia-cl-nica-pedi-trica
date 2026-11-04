@@ -51,12 +51,13 @@ function entorno({ fallaLog = false, sesion = true } = {}) {
     '@/lib/prisma': { prisma },
     '@/lib/auth': { requireUser: async () => {
       if (!sesion) throw new Error('Sin sesión')
-      return { email: 'cuenta-validada@example.test' }
+      return { email: 'cuenta-validada@example.test', rol: 'DOCTORA' }
     } },
     '@/lib/registros': { requirePaciente: async () => ({}) },
     'next/cache': { revalidatePath() {} },
     'next/navigation': { redirect() { throw new Error('redirect') } },
   }
+  mocks['@/lib/auth'].requireRole = mocks['@/lib/auth'].requireUser
   return { mocks, estado: () => estado }
 }
 

@@ -18,8 +18,8 @@ export async function asegurarPerfil(email: string, nombre: string, color: strin
   color = perfil.color
   return mutarConAuditoria('Perfil', 'EDICION', ['nombre', 'color', 'avatarUrl'], tx => tx.perfil.upsert({
     where: { email },
-    update: {},
-    create: { email, nombre, color },
+    update: { rol: perfil.rol },
+    create: { email, nombre, color, rol: perfil.rol },
   }))
 }
 
@@ -43,8 +43,8 @@ export async function subirAvatar(email: string, nombre: string, color: string, 
 
   await mutarConAuditoria('Perfil', 'SUBIDA', ['nombre', 'color', 'avatarUrl'], tx => tx.perfil.upsert({
     where: { email },
-    update: { avatarUrl: data.publicUrl },
-    create: { email, nombre, color, avatarUrl: data.publicUrl },
+    update: { avatarUrl: data.publicUrl, rol: perfil.rol },
+    create: { email, nombre, color, avatarUrl: data.publicUrl, rol: perfil.rol },
   }))
 
   revalidatePath('/', 'layout')

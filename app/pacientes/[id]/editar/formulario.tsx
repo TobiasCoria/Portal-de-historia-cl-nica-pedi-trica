@@ -8,7 +8,7 @@ import { schema, type PacienteFormData } from '../../schema'
 import { actualizarPaciente } from '../../actions'
 import type { Paciente } from '@prisma/client'
 
-export default function FormularioEdicion({ paciente }: { paciente: Paciente }) {
+export default function FormularioEdicion({ paciente, clinico = true }: { paciente: Paciente; clinico?: boolean }) {
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -90,6 +90,7 @@ export default function FormularioEdicion({ paciente }: { paciente: Paciente }) 
 
       <hr className="my-4 border-[#e3e7e2]" />
 
+      {clinico && <>
       <Campo label="Antecedentes familiares">
         <textarea {...register('antecedentesFamiliares')} className="input" rows={3} />
       </Campo>
@@ -105,6 +106,7 @@ export default function FormularioEdicion({ paciente }: { paciente: Paciente }) 
 
       <hr className="my-4 border-[#e3e7e2]" />
 
+      </>}
       <Campo label="Obra social / prepaga"><input {...register('obraSocial')} className="input" /></Campo>
       <Campo label="Número de afiliado"><input {...register('numeroAfiliado')} className="input" /></Campo>
       <Campo label="Plan"><input {...register('plan')} className="input" /></Campo>

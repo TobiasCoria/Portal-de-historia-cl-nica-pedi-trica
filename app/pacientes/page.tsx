@@ -1,3 +1,4 @@
+import { esDoctora } from '@/lib/auth'
 import Link from 'next/link'
 import { UserPlus, Search, Pencil, Trash2, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -101,14 +102,14 @@ export default async function PacientesPage({
                           <Pencil size={13} />
                           Editar
                         </Link>
-                        <ConfirmarEliminar mensaje={`¿Eliminar a ${p.nombre} ${p.apellido}? El paciente y su historia clínica quedarán ocultos, pero se conservan en el sistema.`}>
+                        {user?.email && esDoctora(user.email) && <ConfirmarEliminar mensaje={`¿Eliminar a ${p.nombre} ${p.apellido}? El paciente y su historia clínica quedarán ocultos, pero se conservan en el sistema.`}>
                           <form action={eliminarPaciente.bind(null, p.id)}>
                             <button type="submit" className="action-btn-danger">
                               <Trash2 size={13} />
                               Eliminar
                             </button>
                           </form>
-                        </ConfirmarEliminar>
+                        </ConfirmarEliminar>}
                       </div>
                     </td>
                   </tr>

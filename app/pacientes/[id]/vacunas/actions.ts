@@ -4,7 +4,7 @@ import { mutarConAuditoria, registrarAuditoria } from '@/lib/auditoria'
 
 import { vacunaSchema, vacunaConProximaSchema } from '@/lib/validaciones'
 
-import { requireUser } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { requirePaciente } from '@/lib/registros'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -17,7 +17,7 @@ export async function crearVacuna(pacienteId: string, data: {
   fechaProgramada?: string
   observaciones?: string
 }) {
-  await requireUser()
+  await requireRole('DOCTORA')
   data = vacunaSchema.parse(data)
   await requirePaciente(pacienteId)
   await mutarConAuditoria('VacunaAplicada', 'ALTA', Object.keys(data), tx => tx.vacunaAplicada.create({
@@ -44,10 +44,10 @@ export async function crearVacunaConProxima(pacienteId: string, data: {
   proximaDosis?: string
   proximaFecha?: string
 }) {
-  await requireUser()
+  await requireRole('DOCTORA')
   data = vacunaConProximaSchema.parse(data)
   await requirePaciente(pacienteId)
-  const user = await requireUser()
+  const user = await requireRole('DOCTORA')
   await mutarConAuditoria('VacunaAplicada', 'ALTA', ['nombre', 'dosis', 'fechaAplicada', 'observaciones'], async tx => {
     const aplicada = await tx.vacunaAplicada.create({ data: {
       pacienteId, nombre: data.nombre, dosis: data.dosis || undefined,
@@ -77,7 +77,7 @@ export async function actualizarVacuna(pacienteId: string, id: string, data: {
   fechaProgramada?: string
   observaciones?: string
 }): Promise<{ error: string } | void> {
-  await requireUser()
+  await requireRole('DOCTORA')
   data = vacunaSchema.parse(data)
   await requirePaciente(pacienteId)
   try {
@@ -102,7 +102,7 @@ export async function actualizarVacuna(pacienteId: string, id: string, data: {
 }
 
 export async function eliminarVacuna(pacienteId: string, id: string) {
-  await requireUser()
+  await requireRole('DOCTORA')
   await requirePaciente(pacienteId)
   await mutarConAuditoria('VacunaAplicada', 'BAJA', ['eliminadoEn'], tx => tx.vacunaAplicada.update({ where: { id, pacienteId, eliminadoEn: null }, data: { eliminadoEn: new Date() } }))
   revalidatePath('/agenda')

@@ -1,3 +1,4 @@
+import { requireRole } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import { obtenerVacuna } from '../../lecturas'
 import Nav from '@/app/components/nav'
@@ -9,6 +10,7 @@ export default async function EditarVacunaPage({
 }: {
   params: Promise<{ id: string; vacunaId: string }>
 }) {
+  await requireRole('DOCTORA')
   const { id, vacunaId } = await params
   const vacuna = await obtenerVacuna(id, vacunaId)
 

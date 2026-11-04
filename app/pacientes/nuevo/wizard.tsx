@@ -16,7 +16,7 @@ const PASOS = [
   { titulo: 'Confirmación', campos: [] },
 ] as const
 
-export default function PacienteWizard() {
+export default function PacienteWizard({ clinico = true }: { clinico?: boolean }) {
   const [paso, setPaso] = useState(0)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -37,11 +37,11 @@ export default function PacienteWizard() {
   async function siguiente() {
     const campos = [...PASOS[paso].campos] as (keyof FormData)[]
     const valido = campos.length === 0 || (await trigger(campos))
-    if (valido) setPaso((p) => Math.min(p + 1, PASOS.length - 1))
+    if (valido) setPaso(p => !clinico && p === 1 ? 3 : Math.min(p + 1, PASOS.length - 1))
   }
 
   function anterior() {
-    setPaso((p) => Math.max(p - 1, 0))
+    setPaso(p => !clinico && p === 3 ? 1 : Math.max(p - 1, 0))
   }
 
   async function confirmar() {
@@ -111,7 +111,7 @@ export default function PacienteWizard() {
           </>
         )}
 
-        {paso === 2 && (
+        {paso === 2 && clinico && (
           <>
             <Campo label="Antecedentes familiares">
               <textarea {...register('antecedentesFamiliares')} className="input" rows={3} />
@@ -147,7 +147,7 @@ export default function PacienteWizard() {
             <p><strong>Fecha de nacimiento:</strong> {valores.fechaNac}</p>
             <p><strong>Tutor:</strong> {valores.tutorNombre || '—'}</p>
             <p><strong>Teléfono:</strong> {valores.telefono || '—'}</p>
-            <p><strong>Alergias:</strong> {valores.alergias || '—'}</p>
+            {clinico && <p><strong>Alergias:</strong> {valores.alergias || '—'}</p>}
             <p><strong>Obra social:</strong> {valores.obraSocial || (valores.particular ? 'Particular' : '—')}</p>
             <p><strong>Vínculo:</strong> {valores.tutorVinculo || '—'}</p>
             <p className="pt-3 text-[#5b6b64]">{TEXTO_CONSENTIMIENTO}</p>

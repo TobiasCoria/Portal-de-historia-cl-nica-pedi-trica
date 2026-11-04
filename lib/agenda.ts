@@ -2,16 +2,16 @@ import { requireUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function obtenerAgendaProxima() {
-  await requireUser()
+  const user = await requireUser()
   const ahora = new Date()
   const en24hs = new Date(ahora.getTime() + 24 * 60 * 60 * 1000)
   const en30dias = new Date(ahora.getTime() + 30 * 24 * 60 * 60 * 1000)
 
   const [vacunas, turnos] = await Promise.all([
-    prisma.vacunaAplicada.findMany({
+    user.rol === 'DOCTORA' ? prisma.vacunaAplicada.findMany({
       where: { eliminadoEn: null, paciente: { eliminadoEn: null }, fechaAplicada: null, fechaProgramada: { not: null, lte: en30dias } },
-      include: { paciente: true },
-    }),
+      include: { paciente: { select: { id: true, nombre: true, apellido: true, dni: true } } },
+    }) : Promise.resolve([]),
     prisma.turno.findMany({
       where: { paciente: { eliminadoEn: null }, estado: 'PENDIENTE', fecha: { lte: en30dias } },
       include: { paciente: true },

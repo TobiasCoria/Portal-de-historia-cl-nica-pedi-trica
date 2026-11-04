@@ -3,7 +3,7 @@
 import { mutarConAuditoria } from '@/lib/auditoria'
 
 import { schema, schemaAlta, type PacienteAltaData, type PacienteFormData } from './schema'
-import { requireUser } from '@/lib/auth'
+import { requireUser, requireRole } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -34,6 +34,9 @@ export async function crearPaciente(data: PacienteAltaData): Promise<{ error: st
   const validacion = schemaAlta.safeParse(data)
   if (!validacion.success) return { error: validacion.error.issues[0]?.message || 'Revisá los datos del paciente.' }
   const datos = schema.parse(validacion.data)
+  if (user.rol !== 'DOCTORA') {
+    delete datos.antecedentesFamiliares; delete datos.alergias; delete datos.pesoNacer; delete datos.tallaNacer; delete datos.grupoSanguineo; delete datos.observaciones
+  }
   try {
     await mutarConAuditoria('Paciente', 'ALTA', [...Object.keys(datos), 'consentimientoAt', 'consentimientoPor'], tx => tx.paciente.create({
       data: {
@@ -52,7 +55,7 @@ export async function crearPaciente(data: PacienteAltaData): Promise<{ error: st
 }
 
 export async function eliminarPaciente(id: string) {
-  await requireUser()
+  await requireRole('DOCTORA')
   try {
     await mutarConAuditoria('Paciente', 'BAJA', ['eliminadoEn'], tx => tx.paciente.update({
       where: { id, eliminadoEn: null },
@@ -69,14 +72,19 @@ export async function eliminarPaciente(id: string) {
 
 
 export async function actualizarPaciente(id: string, data: PacienteFormData): Promise<{ error: string } | void> {
-  await requireUser()
-  data = schema.parse(data)
+  const user = await requireUser()
+  const parsed = schema.safeParse(data)
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message || 'Revisá los datos.' }
+  data = parsed.data
+  const { antecedentesFamiliares, alergias, pesoNacer, tallaNacer, grupoSanguineo, observaciones, ...administrativos } = data
+  const datos = user.rol === 'DOCTORA' ? data : administrativos
+  void antecedentesFamiliares; void alergias; void pesoNacer; void tallaNacer; void grupoSanguineo; void observaciones
   try {
-    await mutarConAuditoria('Paciente', 'EDICION', Object.keys(data), tx => tx.paciente.update({
+    await mutarConAuditoria('Paciente', 'EDICION', Object.keys(datos), tx => tx.paciente.update({
       where: { id, eliminadoEn: null },
       data: {
-        ...data,
-        fechaNac: new Date(data.fechaNac),
+        ...datos,
+        fechaNac: new Date(datos.fechaNac),
       },
     }))
   } catch (error) {

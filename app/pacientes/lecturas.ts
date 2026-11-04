@@ -1,10 +1,13 @@
 import 'server-only'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/auth'
+import { pacienteAdministrativo, camposClinicosVacios } from '@/lib/paciente-administrativo'
 
 export async function obtenerPaciente(id: string) {
-  await requireUser()
-  return prisma.paciente.findUnique({ where: { id, eliminadoEn: null } })
+  const user = await requireUser()
+  if (user.rol === 'DOCTORA') return prisma.paciente.findUnique({ where: { id, eliminadoEn: null } })
+  const paciente = await prisma.paciente.findUnique({ where: { id, eliminadoEn: null }, select: pacienteAdministrativo })
+  return paciente ? { ...paciente, ...camposClinicosVacios } : null
 }
 
 export async function listarPacientesFicha(busqueda?: string) {

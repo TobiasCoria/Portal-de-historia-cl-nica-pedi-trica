@@ -1,3 +1,4 @@
+import { requireUser } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import { obtenerPaciente } from '../../lecturas'
 import { prisma } from '@/lib/prisma'
@@ -11,15 +12,16 @@ export default async function EditarPacientePage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const user = await requireUser()
   const { id } = await params
   const paciente = await obtenerPaciente(id)
 
   if (!paciente) notFound()
 
-  const documentos = await prisma.documento.findMany({
+  const documentos = user.rol === 'DOCTORA' ? await prisma.documento.findMany({
     where: { pacienteId: id, consultaId: null, eliminadoEn: null },
     orderBy: { creadoEn: 'desc' },
-  })
+  }) : []
 
   return (
     <div className="min-h-screen p-8">
@@ -30,14 +32,14 @@ export default async function EditarPacientePage({
           Editar paciente — {paciente.nombre} {paciente.apellido}
         </h1>
 
-        <FormularioEdicion paciente={paciente} />
+        <FormularioEdicion paciente={paciente} clinico={user.rol === 'DOCTORA'} />
 
-        <div className="mt-8">
+        {user.rol === 'DOCTORA' && <div className="mt-8">
           <h2 className="mb-3 text-lg font-medium">Documentos</h2>
           <div className="card">
             <Documentos pacienteId={id} documentos={documentos} />
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   )

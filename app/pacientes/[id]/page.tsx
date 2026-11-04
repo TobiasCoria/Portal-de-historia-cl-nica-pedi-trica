@@ -1,3 +1,4 @@
+import { pacienteAdministrativo, camposClinicosVacios } from '@/lib/paciente-administrativo'
 import { requireUser } from '@/lib/auth'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -12,7 +13,11 @@ import { eliminarVacuna } from './vacunas/actions'
 import { cancelarTurno } from './turnos/actions'
 
 async function obtenerPacienteConConsultas(id: string) {
-  await requireUser()
+  const user = await requireUser()
+  if (user.rol === 'SECRETARIA') {
+    const paciente = await prisma.paciente.findUnique({ where: { id, eliminadoEn: null }, select: { ...pacienteAdministrativo, turnos: { orderBy: { fecha: 'asc' } } } })
+    return paciente ? { ...paciente, ...camposClinicosVacios, consultas: [], vacunas: [], documentos: [] } : null
+  }
   return prisma.paciente.findUnique({
     where: { id, eliminadoEn: null },
     include: {
@@ -29,6 +34,7 @@ export default async function FichaPacientePage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const user = await requireUser()
   const { id } = await params
   const paciente = await obtenerPacienteConConsultas(id)
 
@@ -63,10 +69,10 @@ export default async function FichaPacientePage({
               <CalendarPlus size={15} />
               Agendar turno
             </Link>
-            <Link href={`/pacientes/${id}/consultas/nueva`} className="btn btn-primary">
+            {user.rol === 'DOCTORA' && <Link href={`/pacientes/${id}/consultas/nueva`} className="btn btn-primary">
               <Stethoscope size={15} />
               Nueva consulta
-            </Link>
+            </Link>}
           </div>
         </div>
 
@@ -94,10 +100,10 @@ export default async function FichaPacientePage({
                       {t.motivo && <span className="text-[#5b6b64]"> · {t.motivo}</span>}
                     </div>
                     <div className="flex gap-2">
-                      <Link href={`/pacientes/${id}/consultas/nueva?turnoId=${t.id}`} className="action-btn">
+                      {user.rol === 'DOCTORA' && <Link href={`/pacientes/${id}/consultas/nueva?turnoId=${t.id}`}  className="action-btn">
                         <CalendarCheck2 size={13} />
                         Atender
-                      </Link>
+                      </Link>}
                       <Link href={`/pacientes/${id}/turnos/${t.id}/editar`} className="action-btn">
                         <Pencil size={13} />
                         Editar
@@ -118,6 +124,7 @@ export default async function FichaPacientePage({
           )}
         </div>
 
+        {user.rol === 'DOCTORA' && <>
         <div className="mb-10">
           <h2 className="mb-3 text-lg font-medium">Documentos</h2>
           <div className="card">
@@ -229,6 +236,7 @@ export default async function FichaPacientePage({
             ))}
           </div>
         )}
+        </>}
       </div>
     </div>
   )

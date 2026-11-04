@@ -3,14 +3,14 @@
 import { mutarConAuditoria, registrarAuditoria } from '@/lib/auditoria'
 
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { requirePaciente } from '@/lib/registros'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 export async function subirDocumento(formData: FormData) {
-  await requireUser()
+  await requireRole('DOCTORA')
   const pacienteId = z.string().uuid().parse(formData.get('pacienteId'))
   const consultaId = z.string().uuid().nullable().parse(formData.get('consultaId'))
   await requirePaciente(pacienteId)
@@ -32,7 +32,7 @@ export async function subirDocumento(formData: FormData) {
 }
 
 export async function obtenerUrlDocumento(id: string) {
-  const user = await requireUser()
+  const user = await requireRole('DOCTORA')
   const documento = await prisma.documento.findFirstOrThrow({ where: {
     id: z.string().uuid().parse(id), eliminadoEn: null, paciente: { eliminadoEn: null },
     OR: [{ consultaId: null }, { consulta: { eliminadoEn: null } }],
@@ -45,7 +45,7 @@ export async function obtenerUrlDocumento(id: string) {
 }
 
 export async function eliminarDocumento(pacienteId: string, id: string) {
-  await requireUser()
+  await requireRole('DOCTORA')
   await requirePaciente(pacienteId)
   await mutarConAuditoria('Documento', 'BAJA', ['eliminadoEn'], tx => tx.documento.update({
     where: { id, pacienteId, eliminadoEn: null, OR: [{ consultaId: null }, { consulta: { eliminadoEn: null } }] },

@@ -8,7 +8,9 @@ export async function requireUser() {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user?.email) redirect('/login')
-  return user
+  const perfil = PERFILES.find(p => p.email.toLowerCase() === user.email!.toLowerCase())
+  if (!perfil) notFound()
+  return { ...user, rol: perfil.rol, nombre: perfil.nombre }
 }
 
 export function esDoctora(email: string) {
@@ -16,7 +18,11 @@ export function esDoctora(email: string) {
 }
 
 export async function requireDoctora() {
+  return requireRole('DOCTORA')
+}
+
+export async function requireRole(...roles: ('DOCTORA' | 'SECRETARIA')[]) {
   const user = await requireUser()
-  if (!esDoctora(user.email!)) notFound()
+  if (!roles.includes(user.rol)) notFound()
   return user
 }
