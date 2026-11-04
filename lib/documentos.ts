@@ -1,5 +1,7 @@
 'use server'
 
+import { mutarConAuditoria, registrarAuditoria } from '@/lib/auditoria'
+
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/auth'
 import { requirePaciente } from '@/lib/registros'
@@ -23,14 +25,14 @@ export async function subirDocumento(formData: FormData) {
   const supabase = createAdminClient()
   const { error } = await supabase.storage.from('documentos').upload(path, archivo)
   if (error) throw new Error('No se pudo subir el documento. Volvé a intentar.')
-  await prisma.documento.create({ data: {
+  await mutarConAuditoria('Documento', 'SUBIDA', ['pacienteId', 'consultaId', 'nombre', 'url', 'tipo'], tx => tx.documento.create({ data: {
     pacienteId, consultaId, nombre: archivo.name, url: path, tipo: archivo.type,
-  } })
+  } }))
   revalidatePath(`/pacientes/${pacienteId}`)
 }
 
 export async function obtenerUrlDocumento(id: string) {
-  await requireUser()
+  const user = await requireUser()
   const documento = await prisma.documento.findFirstOrThrow({ where: {
     id: z.string().uuid().parse(id), eliminadoEn: null, paciente: { eliminadoEn: null },
     OR: [{ consultaId: null }, { consulta: { eliminadoEn: null } }],
@@ -38,15 +40,16 @@ export async function obtenerUrlDocumento(id: string) {
   const supabase = createAdminClient()
   const { data, error } = await supabase.storage.from('documentos').createSignedUrl(documento.url, 60 * 5)
   if (error) throw new Error('No se pudo abrir el documento.')
+  await registrarAuditoria(prisma, user.email!, { entidad: 'Documento', accion: 'APERTURA', entidadId: documento.id, pacienteId: documento.pacienteId, campos: [] })
   return data?.signedUrl
 }
 
 export async function eliminarDocumento(pacienteId: string, id: string) {
   await requireUser()
   await requirePaciente(pacienteId)
-  await prisma.documento.update({
+  await mutarConAuditoria('Documento', 'BAJA', ['eliminadoEn'], tx => tx.documento.update({
     where: { id, pacienteId, eliminadoEn: null, OR: [{ consultaId: null }, { consulta: { eliminadoEn: null } }] },
     data: { eliminadoEn: new Date() },
-  })
+  }))
   revalidatePath(`/pacientes/${pacienteId}`)
 }

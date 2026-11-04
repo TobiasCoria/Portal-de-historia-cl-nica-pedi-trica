@@ -1,8 +1,9 @@
 'use server'
 
+import { mutarConAuditoria } from '@/lib/auditoria'
+
 import { requireUser } from '@/lib/auth'
 import { PERFILES } from '@/lib/perfiles-config'
-import { prisma } from '@/lib/prisma'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
@@ -15,11 +16,11 @@ export async function asegurarPerfil(email: string, nombre: string, color: strin
   if (!perfil) throw new Error('Perfil no autorizado.')
   nombre = perfil.nombre
   color = perfil.color
-  return prisma.perfil.upsert({
+  return mutarConAuditoria('Perfil', 'EDICION', ['nombre', 'color', 'avatarUrl'], tx => tx.perfil.upsert({
     where: { email },
     update: {},
     create: { email, nombre, color },
-  })
+  }))
 }
 
 export async function subirAvatar(email: string, nombre: string, color: string, formData: FormData) {
@@ -40,11 +41,11 @@ export async function subirAvatar(email: string, nombre: string, color: string, 
 
   const { data } = supabase.storage.from('avatares').getPublicUrl(path)
 
-  await prisma.perfil.upsert({
+  await mutarConAuditoria('Perfil', 'SUBIDA', ['nombre', 'color', 'avatarUrl'], tx => tx.perfil.upsert({
     where: { email },
     update: { avatarUrl: data.publicUrl },
     create: { email, nombre, color, avatarUrl: data.publicUrl },
-  })
+  }))
 
   revalidatePath('/', 'layout')
 }

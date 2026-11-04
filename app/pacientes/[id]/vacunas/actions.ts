@@ -1,10 +1,11 @@
 'use server'
 
+import { mutarConAuditoria, registrarAuditoria } from '@/lib/auditoria'
+
 import { vacunaSchema, vacunaConProximaSchema } from '@/lib/validaciones'
 
 import { requireUser } from '@/lib/auth'
 import { requirePaciente } from '@/lib/registros'
-import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { mensajeError } from '@/lib/errores'
@@ -17,8 +18,9 @@ export async function crearVacuna(pacienteId: string, data: {
   observaciones?: string
 }) {
   await requireUser()
+  data = vacunaSchema.parse(data)
   await requirePaciente(pacienteId)
-  await prisma.vacunaAplicada.create({
+  await mutarConAuditoria('VacunaAplicada', 'ALTA', Object.keys(data), tx => tx.vacunaAplicada.create({
     data: {
       pacienteId,
       nombre: data.nombre,
@@ -27,7 +29,7 @@ export async function crearVacuna(pacienteId: string, data: {
       fechaProgramada: data.fechaProgramada ? new Date(data.fechaProgramada) : undefined,
       observaciones: data.observaciones || undefined,
     },
-  })
+  }))
 
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
@@ -43,27 +45,23 @@ export async function crearVacunaConProxima(pacienteId: string, data: {
   proximaFecha?: string
 }) {
   await requireUser()
+  data = vacunaConProximaSchema.parse(data)
   await requirePaciente(pacienteId)
-  await prisma.vacunaAplicada.create({
-    data: {
-      pacienteId,
-      nombre: data.nombre,
-      dosis: data.dosis || undefined,
-      fechaAplicada: new Date(data.fechaAplicada),
-      observaciones: data.observaciones || undefined,
-    },
-  })
-
-  if (data.proximaFecha) {
-    await prisma.vacunaAplicada.create({
-      data: {
-        pacienteId,
-        nombre: data.nombre,
-        dosis: data.proximaDosis || undefined,
+  const user = await requireUser()
+  await mutarConAuditoria('VacunaAplicada', 'ALTA', ['nombre', 'dosis', 'fechaAplicada', 'observaciones'], async tx => {
+    const aplicada = await tx.vacunaAplicada.create({ data: {
+      pacienteId, nombre: data.nombre, dosis: data.dosis || undefined,
+      fechaAplicada: new Date(data.fechaAplicada), observaciones: data.observaciones || undefined,
+    } })
+    if (data.proximaFecha) {
+      const proxima = await tx.vacunaAplicada.create({ data: {
+        pacienteId, nombre: data.nombre, dosis: data.proximaDosis || undefined,
         fechaProgramada: new Date(data.proximaFecha),
-      },
-    })
-  }
+      } })
+      await registrarAuditoria(tx, user.email!, { entidad: 'VacunaAplicada', accion: 'ALTA', entidadId: proxima.id, pacienteId, campos: ['nombre', 'dosis', 'fechaProgramada'] })
+    }
+    return aplicada
+  })
 
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
@@ -80,9 +78,10 @@ export async function actualizarVacuna(pacienteId: string, id: string, data: {
   observaciones?: string
 }): Promise<{ error: string } | void> {
   await requireUser()
+  data = vacunaSchema.parse(data)
   await requirePaciente(pacienteId)
   try {
-    await prisma.vacunaAplicada.update({
+    await mutarConAuditoria('VacunaAplicada', 'EDICION', Object.keys(data), tx => tx.vacunaAplicada.update({
       where: { id, pacienteId, eliminadoEn: null },
       data: {
         nombre: data.nombre,
@@ -91,7 +90,7 @@ export async function actualizarVacuna(pacienteId: string, id: string, data: {
         fechaProgramada: data.fechaProgramada ? new Date(data.fechaProgramada) : null,
         observaciones: data.observaciones || null,
       },
-    })
+    }))
   } catch (error) {
     return { error: mensajeError(error) }
   }
@@ -105,7 +104,7 @@ export async function actualizarVacuna(pacienteId: string, id: string, data: {
 export async function eliminarVacuna(pacienteId: string, id: string) {
   await requireUser()
   await requirePaciente(pacienteId)
-  await prisma.vacunaAplicada.update({ where: { id, pacienteId, eliminadoEn: null }, data: { eliminadoEn: new Date() } })
+  await mutarConAuditoria('VacunaAplicada', 'BAJA', ['eliminadoEn'], tx => tx.vacunaAplicada.update({ where: { id, pacienteId, eliminadoEn: null }, data: { eliminadoEn: new Date() } }))
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)

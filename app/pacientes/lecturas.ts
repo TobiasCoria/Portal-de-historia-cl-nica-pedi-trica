@@ -1,7 +1,6 @@
 import 'server-only'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/auth'
-import { requirePaciente } from '@/lib/registros'
 
 export async function obtenerPaciente(id: string) {
   await requireUser()

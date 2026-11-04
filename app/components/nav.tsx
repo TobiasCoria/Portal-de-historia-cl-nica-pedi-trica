@@ -1,4 +1,5 @@
 import AvatarUploader from './avatar-uploader'
+import { esDoctora } from '@/lib/auth'
 import Link from 'next/link'
 import { Users, CalendarClock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -33,6 +34,7 @@ export default async function Nav() {
           <CalendarClock size={16} />
           Agenda
         </Link>
+        {user?.email && esDoctora(user.email) && <Link href="/auditoria" className="font-medium text-[#1c2521] hover:text-[#3e6fa8]">Auditoría</Link>}
         <LogoutButton />
       </nav>
     </div>

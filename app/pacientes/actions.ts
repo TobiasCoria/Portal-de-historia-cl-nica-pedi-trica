@@ -1,8 +1,9 @@
 'use server'
 
+import { mutarConAuditoria } from '@/lib/auditoria'
+
 import { schema } from './schema'
 import { requireUser } from '@/lib/auth'
-import { requirePaciente } from '@/lib/registros'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -54,12 +55,12 @@ export async function crearPaciente(data: {
   await requireUser()
   data = schema.parse(data)
   try {
-    await prisma.paciente.create({
+    await mutarConAuditoria('Paciente', 'ALTA', Object.keys(data), tx => tx.paciente.create({
       data: {
         ...data,
         fechaNac: new Date(data.fechaNac),
       },
-    })
+    }))
   } catch (error) {
     return { error: mensajeError(error) }
   }
@@ -71,10 +72,10 @@ export async function crearPaciente(data: {
 export async function eliminarPaciente(id: string) {
   await requireUser()
   try {
-    await prisma.paciente.update({
+    await mutarConAuditoria('Paciente', 'BAJA', ['eliminadoEn'], tx => tx.paciente.update({
       where: { id, eliminadoEn: null },
       data: { eliminadoEn: new Date() },
-    })
+    }))
   } catch (error) {
     console.error(mensajeError(error))
     return
@@ -111,13 +112,13 @@ export async function actualizarPaciente(id: string, data: {
   await requireUser()
   data = schema.parse(data)
   try {
-    await prisma.paciente.update({
+    await mutarConAuditoria('Paciente', 'EDICION', Object.keys(data), tx => tx.paciente.update({
       where: { id, eliminadoEn: null },
       data: {
         ...data,
         fechaNac: new Date(data.fechaNac),
       },
-    })
+    }))
   } catch (error) {
     return { error: mensajeError(error) }
   }
