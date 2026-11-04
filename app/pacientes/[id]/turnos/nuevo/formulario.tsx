@@ -43,10 +43,10 @@ export default function FormularioTurno({ pacienteId }: { pacienteId: string }) 
       </div>
 
       {error && <p role="alert" className="form-error">{error}</p>}
-      <button type="submit" disabled={enviando} className="btn btn-primary disabled:opacity-50">
+      <div className="sticky-actions"><span className="text-xs text-[#6f8578]">Revisá los datos antes de guardar.</span><button type="submit" disabled={enviando} className="btn btn-primary disabled:opacity-50">
         <Check size={16} />
         {enviando ? 'Agendando...' : 'Agendar turno'}
-      </button>
+      </button></div>
     </form>
   )
 }

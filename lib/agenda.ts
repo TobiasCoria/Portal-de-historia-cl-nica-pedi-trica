@@ -1,5 +1,6 @@
 import { requireUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { fechaHoy, diaLocal } from '@/lib/fechas'
 
 export async function obtenerAgendaProxima() {
   const user = await requireUser()
@@ -14,7 +15,7 @@ export async function obtenerAgendaProxima() {
     }) : Promise.resolve([]),
     prisma.turno.findMany({
       where: { paciente: { eliminadoEn: null }, estado: 'PENDIENTE', fecha: { lte: en30dias } },
-      include: { paciente: true },
+      include: { paciente: { select: { id: true, nombre: true, apellido: true, dni: true } } },
     }),
   ])
 
@@ -25,9 +26,9 @@ export async function obtenerAgendaProxima() {
       pacienteId: v.pacienteId,
       paciente: v.paciente,
       titulo: v.nombre + (v.dosis ? ` (${v.dosis})` : ''),
-      fecha: v.fechaProgramada!,
-      vencido: v.fechaProgramada! < ahora,
-      urgente: v.fechaProgramada! >= ahora && v.fechaProgramada! <= en24hs,
+      fecha: diaLocal(v.fechaProgramada!.toISOString().slice(0, 10)),
+      vencido: v.fechaProgramada!.toISOString().slice(0, 10) < fechaHoy(ahora),
+      urgente: v.fechaProgramada!.toISOString().slice(0, 10) >= fechaHoy(ahora) && v.fechaProgramada!.toISOString().slice(0, 10) <= fechaHoy(en24hs),
     })),
     ...turnos.map((t) => ({
       tipo: 'turno' as const,

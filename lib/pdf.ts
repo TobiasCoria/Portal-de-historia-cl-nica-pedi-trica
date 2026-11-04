@@ -28,19 +28,28 @@ export async function crearPdf(datos: DatosPdf) {
     page.drawText(nombre, { x: 45, y: 786, size: tam, font: negrita, color: tinta })
     page.drawText(seguro(datos.matricula ? `Matrícula: ${datos.matricula}` : 'Matrícula no registrada'), { x: 45, y: 773, size: 8, font: normal, color: secundario })
     page.drawText(fechaCorta(fechaHoy()), { x: 435, y: 806, size: 8, font: normal, color: secundario })
-    y = 740
+    const identificacion = seguro(`${datos.paciente} · DNI: ${datos.dni}`)
+    page.drawText(identificacion, { x: 45, y: 751, size: Math.min(9, 505 / Math.max(1, normal.widthOfTextAtSize(identificacion, 1))), font: normal, color: secundario })
+    y = 720
   }
   function espacio(altura: number) { if (y - altura < 64) { page = pdf.addPage([595.28, 841.89]); encabezado() } }
   function texto(valor: string, bold = false, size = 10) {
     const font = bold ? negrita : normal, ancho = 505
     for (const parrafo of seguro(valor).replace(/\r\n/g, '\n').split('\n')) {
       let linea = ''
-      // Se conserva todo el texto, incluidos tokens largos que no tienen espacios.
-      for (const caracter of parrafo.replace(/\t/g, '    ')) {
-        if (font.widthOfTextAtSize(linea + caracter, size) > ancho && linea) {
-          espacio(size + 6); page.drawText(linea, { x: 45, y, size, font, color: tinta }); y -= size + 6; linea = ''
+      // Se respetan las palabras; únicamente los tokens más anchos que la página se dividen.
+      for (const token of parrafo.replace(/\t/g, '    ').split(/(\s+)/)) {
+        if (!linea && !token.trim()) continue
+        if (font.widthOfTextAtSize(linea + token, size) > ancho && linea) {
+          espacio(size + 6); page.drawText(linea.trimEnd(), { x: 45, y, size, font, color: tinta }); y -= size + 6; linea = ''
         }
-        linea += caracter
+        const palabra = linea ? token : token.trimStart()
+        for (const caracter of palabra) {
+          if (font.widthOfTextAtSize(linea + caracter, size) > ancho && linea) {
+            espacio(size + 6); page.drawText(linea, { x: 45, y, size, font, color: tinta }); y -= size + 6; linea = ''
+          }
+          linea += caracter
+        }
       }
       espacio(size + 6)
       if (linea) page.drawText(linea, { x: 45, y, size, font, color: tinta })

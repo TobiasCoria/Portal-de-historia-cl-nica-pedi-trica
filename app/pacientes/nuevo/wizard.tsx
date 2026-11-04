@@ -34,6 +34,7 @@ export default function PacienteWizard({ clinico = true }: { clinico?: boolean }
   })
 
   const valores = useWatch({ control })
+  const pasosVisibles = PASOS.map((p, indice) => ({ ...p, indice })).filter(p => clinico || p.indice !== 2)
 
   async function siguiente() {
     const campos = [...PASOS[paso].campos] as (keyof FormData)[]
@@ -66,17 +67,17 @@ export default function PacienteWizard({ clinico = true }: { clinico?: boolean }
     <div className="card">
       <CambiosPendientes />
       <div className="mb-6 flex items-center gap-2">
-        {PASOS.map((p, i) => (
+        {pasosVisibles.map((p) => (
           <div
             key={p.titulo}
             className={`h-1.5 flex-1 rounded-full transition-colors ${
-              i <= paso ? 'bg-[#3e6fa8]' : 'bg-[#e3e7e2]'
+              p.indice <= paso ? 'bg-[#3e6fa8]' : 'bg-[#e3e7e2]'
             }`}
           />
         ))}
       </div>
       <p className="mb-6 text-sm text-[#5b6b64]">
-        Paso {paso + 1} de {PASOS.length} — {PASOS[paso].titulo}
+        Paso {pasosVisibles.findIndex(p => p.indice === paso) + 1} de {pasosVisibles.length} — {PASOS[paso].titulo}
       </p>
 
       <div className="space-y-4">
@@ -175,7 +176,7 @@ export default function PacienteWizard({ clinico = true }: { clinico?: boolean }
         </div>
       )}
 
-      <div className="mt-8 flex justify-between">
+      <div className="sticky-actions mt-8">
         <button type="button" onClick={anterior} disabled={paso === 0} className="btn btn-outline disabled:opacity-40">
           <ChevronLeft size={16} />
           Anterior

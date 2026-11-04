@@ -42,6 +42,8 @@ export async function crearPaciente(data: PacienteAltaData): Promise<{ error: st
     await mutarConAuditoria('Paciente', 'ALTA', [...Object.keys(datos), 'consentimientoAt', 'consentimientoPor'], tx => tx.paciente.create({
       data: {
         ...datos,
+        sexo: datos.sexo ?? null,
+        ...(user.rol === 'DOCTORA' ? { pesoNacer: data.pesoNacer ?? null, tallaNacer: data.tallaNacer ?? null } : {}),
         fechaNac: new Date(datos.fechaNac),
         consentimientoAt: new Date(),
         consentimientoPor: user.email,
@@ -62,11 +64,10 @@ export async function eliminarPaciente(id: string) {
       where: { id, eliminadoEn: null },
       data: { eliminadoEn: new Date() },
     }))
-  } catch (error) {
-    console.error(mensajeError(error))
-    return
-  }
+  } catch { throw new Error('No se pudo ocultar el paciente. Volvé a intentar.') }
 
+  revalidatePath('/hoy')
+  revalidatePath('/agenda')
   revalidatePath('/pacientes')
 }
 
@@ -86,6 +87,8 @@ export async function actualizarPaciente(id: string, data: PacienteFormData, act
       where: { id, eliminadoEn: null, actualizadoEn: new Date(actualizadoEn) },
       data: {
         ...datos,
+        sexo: datos.sexo ?? null,
+        ...(user.rol === 'DOCTORA' ? { pesoNacer: data.pesoNacer ?? null, tallaNacer: data.tallaNacer ?? null } : {}),
         fechaNac: new Date(datos.fechaNac),
       },
     }))

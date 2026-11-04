@@ -34,6 +34,7 @@ data = vacunaSchema.parse(data)
 
   
   } catch (error) { return { error: mensajeError(error) } }
+  revalidatePath('/hoy')
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
@@ -69,6 +70,7 @@ data = vacunaConProximaSchema.parse(data)
 
   
   } catch (error) { return { error: mensajeError(error) } }
+  revalidatePath('/hoy')
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
@@ -84,9 +86,9 @@ export async function actualizarVacuna(pacienteId: string, id: string, data: {
   observaciones?: string
 }): Promise<{ error: string } | void> {
   await requireRole('DOCTORA')
-  data = vacunaSchema.parse(data)
   await requirePaciente(pacienteId)
   try {
+    data = vacunaSchema.parse(data)
     await mutarConAuditoria('VacunaAplicada', 'EDICION', Object.keys(data), tx => tx.vacunaAplicada.update({
       where: { id, pacienteId, eliminadoEn: null },
       data: {
@@ -101,6 +103,7 @@ export async function actualizarVacuna(pacienteId: string, id: string, data: {
     return { error: mensajeError(error) }
   }
 
+  revalidatePath('/hoy')
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
@@ -111,6 +114,7 @@ export async function eliminarVacuna(pacienteId: string, id: string) {
   await requireRole('DOCTORA')
   await requirePaciente(pacienteId)
   await mutarConAuditoria('VacunaAplicada', 'BAJA', ['eliminadoEn'], tx => tx.vacunaAplicada.update({ where: { id, pacienteId, eliminadoEn: null }, data: { eliminadoEn: new Date() } }))
+  revalidatePath('/hoy')
   revalidatePath('/agenda')
   revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)

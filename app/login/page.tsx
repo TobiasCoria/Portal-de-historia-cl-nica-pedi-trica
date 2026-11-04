@@ -43,7 +43,7 @@ export default function LoginPage() {
         return
       }
       // El login solo autentica. No depende de escrituras de perfil o auditoría.
-      router.push('/pacientes')
+      router.push('/hoy')
       router.refresh()
     } catch (error) {
       setError(error instanceof Error && error.message === 'TIEMPO_AGOTADO'

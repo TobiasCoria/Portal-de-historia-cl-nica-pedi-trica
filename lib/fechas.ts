@@ -17,7 +17,7 @@ export function fechaCorta(valor: Date | string) {
   return fecha.toLocaleDateString('es-AR', { timeZone: ZONA, day: '2-digit', month: 'short', year: 'numeric' })
 }
 export function horaLocal(valor: Date | string) {
-  return new Date(valor).toLocaleTimeString('es-AR', { timeZone: ZONA, hour: '2-digit', minute: '2-digit' })
+  return new Date(valor).toLocaleTimeString('es-AR', { timeZone: ZONA, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 }
 export function inputFechaHora(valor: Date | string) {
   return `${fechaHoy(new Date(valor))}T${horaLocal(valor)}`

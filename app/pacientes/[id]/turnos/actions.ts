@@ -56,6 +56,6 @@ export async function cancelarTurno(pacienteId: string, id: string) {
 export async function marcarAusente(pacienteId: string, id: string) {
   await requireUser()
   await requirePaciente(pacienteId)
-  await mutarConAuditoria('Turno', 'EDICION', ['estado'], tx => tx.turno.update({ where: { id: z.string().uuid().parse(id), pacienteId, estado: 'PENDIENTE' }, data: { estado: 'AUSENTE' } }))
+  await mutarConAuditoria('Turno', 'EDICION', ['estado'], tx => tx.turno.update({ where: { id: z.string().uuid().parse(id), pacienteId, estado: 'PENDIENTE', fecha: { lte: new Date() } }, data: { estado: 'AUSENTE' } }))
   revalidatePath('/agenda'); revalidatePath('/hoy'); revalidatePath(`/pacientes/${pacienteId}`)
 }
