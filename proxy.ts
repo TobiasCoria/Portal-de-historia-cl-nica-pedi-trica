@@ -28,7 +28,8 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Si no hay usuario logueado y no está en /login, lo mandamos a /login
-  if (!user && request.nextUrl.pathname !== '/login') {
+  const publicas = ['/login', '/recuperar-clave', '/actualizar-clave', '/auth/callback']
+  if (!user && !publicas.includes(request.nextUrl.pathname)) {
     const destino = NextResponse.redirect(new URL('/login', request.url))
     response.cookies.getAll().forEach(cookie => destino.cookies.set(cookie))
     return destino
