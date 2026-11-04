@@ -9,7 +9,7 @@ const paciente = { id: 'demo', nombre: 'Ejemplo', apellido: 'Ficticio', dni: 'DE
 test('la ficha consulta únicamente la sección pedida', async () => {
   const casos = {
     datos: [], resumen: ['consulta.findMany', 'turno.findMany'], consultas: ['consulta.findMany', 'consulta.count'],
-    vacunas: ['vacunaAplicada.findMany'], documentos: ['documento.findMany'], turnos: ['turno.findMany'],
+    vacunas: ['vacunaAplicada.findMany', 'vacunaAplicada.count'], documentos: ['documento.findMany', 'documento.count'], turnos: ['turno.findMany', 'turno.count'],
   }
   for (const [seccion, esperadas] of Object.entries(casos)) {
     const llamadas = []

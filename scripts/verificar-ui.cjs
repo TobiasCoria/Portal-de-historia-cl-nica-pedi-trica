@@ -32,9 +32,9 @@ function mocks(ruta) {
     '@/lib/prisma': { prisma: {
       paciente: { findUnique: async () => paciente, findFirst: async () => paciente, findMany: async () => personas, count: async () => 5 },
       consulta: { findMany: async () => [consulta], count: async () => 1, findFirst: async () => consulta },
-      documento: { findMany: async () => [] },
+      documento: { findMany: async () => [], count: async () => 0 },
       vacunaAplicada: { count: async () => 1, findMany: async q => q.where?.fechaAplicada === null ? [{ ...vacuna, fechaAplicada: null, fechaProgramada: new Date(hoy) }] : [vacuna] },
-      turno: { findMany: async () => turnos, count: async () => 3 }, perfil: { findUnique: async () => ({ nombre: 'Doctora · demostración', matricula: null }) },
+      turno: { findMany: async () => turnos, count: async () => 3, findFirst: async () => turnos[0] }, perfil: { findUnique: async () => ({ nombre: 'Doctora · demostración', matricula: null }) },
       logAuditoria: { findMany: async () => [] },
     } },
     'next/navigation': { usePathname: () => ruta, useRouter: () => ({ push() {}, refresh() {} }), notFound() { throw new Error('404') } },
@@ -85,6 +85,10 @@ async function ejecutar() {
         ['ficha', 'app/pacientes/[id]/page.tsx', { params: Promise.resolve({ id }), searchParams: Promise.resolve({}) }, '/pacientes'],
         ['agenda', 'app/agenda/page.tsx', { searchParams: Promise.resolve({ vista: 'semana' }) }, '/agenda'],
         ['consulta', 'app/pacientes/[id]/consultas/nueva/page.tsx', { params: Promise.resolve({ id }), searchParams: Promise.resolve({}) }, '/pacientes'],
+        ['cierre', 'app/pacientes/[id]/consultas/[consultaId]/cierre/page.tsx', { params: Promise.resolve({ id, consultaId: consulta.id }), searchParams: Promise.resolve({}) }, '/pacientes'],
+        ['vacunas', 'app/pacientes/[id]/page.tsx', { params: Promise.resolve({ id }), searchParams: Promise.resolve({ seccion: 'vacunas' }) }, '/pacientes'],
+        ['documentos', 'app/pacientes/[id]/page.tsx', { params: Promise.resolve({ id }), searchParams: Promise.resolve({ seccion: 'documentos' }) }, '/pacientes'],
+        ['turnos', 'app/pacientes/[id]/page.tsx', { params: Promise.resolve({ id }), searchParams: Promise.resolve({ seccion: 'turnos' }) }, '/pacientes'],
       ]) {
         const Page = cargar(archivo, mocks(ruta)).default
         const elemento = await resolver(await Page(parametros))
@@ -96,7 +100,7 @@ async function ejecutar() {
         if (desborde) throw new Error(`Desborde horizontal en ${nombre}, ancho ${width}`)
       }
     }
-    console.log('Revisión visual: 24 capturas, escritorio, tablet y celular. Login y navegación a recuperación probados en el servidor real. Las pantallas protegidas usan dependencias simuladas con datos ficticios; no se accede a sesiones ni datos reales.')
+    console.log('Revisión visual: 36 capturas, escritorio, tablet y celular. Login y navegación a recuperación probados en el servidor real. Las pantallas protegidas usan dependencias simuladas con datos ficticios; no se accede a sesiones ni datos reales.')
   } finally { await browser.close() }
 }
 ejecutar().catch(e => { console.error(e.message); process.exitCode = 1 })
