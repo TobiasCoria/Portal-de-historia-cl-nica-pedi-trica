@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { asegurarPerfil } from '@/lib/perfiles'
 import { PERFILES } from '@/lib/perfiles-config'
 
 
@@ -19,25 +18,38 @@ export default function LoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    if (!seleccionado) return
+    if (!seleccionado || loading) return
     setLoading(true)
     setError('')
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email: seleccionado.email,
-      password,
-    })
-
-    if (error) {
-      setError('Contraseña incorrecta')
+    let timeout: ReturnType<typeof setTimeout> | undefined
+    try {
+      const supabase = createClient()
+      const { error } = await Promise.race([
+        supabase.auth.signInWithPassword({ email: seleccionado.email, password }),
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => reject(new Error('TIEMPO_AGOTADO')), 20000)
+        }),
+      ])
+      if (error) {
+        setError(error.code === 'invalid_credentials'
+          ? 'El email o la contraseña no coinciden.'
+          : error.code === 'email_not_confirmed'
+          ? 'Todavía falta confirmar el email de esta cuenta.'
+          : 'No se pudo iniciar sesión. Volvé a intentar en unos minutos.')
+        return
+      }
+      // El login solo autentica. No depende de escrituras de perfil o auditoría.
+      router.push('/pacientes')
+      router.refresh()
+    } catch (error) {
+      setError(error instanceof Error && error.message === 'TIEMPO_AGOTADO'
+        ? 'La conexión está tardando demasiado. Recargá la página y volvé a intentar.'
+        : 'No se pudo conectar para iniciar sesión. Revisá tu conexión y volvé a intentar.')
+    } finally {
+      if (timeout) clearTimeout(timeout)
       setLoading(false)
-      return
     }
-
-    await asegurarPerfil(seleccionado.email, seleccionado.nombre, seleccionado.color)
-    router.push('/pacientes')
-    router.refresh()
   }
 
   if (!seleccionado) {
@@ -91,6 +103,7 @@ export default function LoginPage() {
             <p className="font-medium text-[#1c2521]">{seleccionado.nombre}</p>
             <button
               type="button"
+              disabled={loading}
               onClick={() => { setSeleccionado(null); setPassword(''); setError('') }}
               className="btn-link text-xs"
             >

@@ -13,7 +13,7 @@ function cargar(archivo, mocks, cache = new Map()) {
   const loadedModule = { exports: {} }
   cache.set(absoluto, loadedModule)
   const codigo = ts.transpileModule(fs.readFileSync(absoluto, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText
   const importar = nombre => {
     if (Object.hasOwn(mocks, nombre)) return mocks[nombre]
@@ -22,7 +22,10 @@ function cargar(archivo, mocks, cache = new Map()) {
     if (nombre.startsWith('.')) return cargar(path.resolve(path.dirname(absoluto), `${nombre}.ts`), mocks, cache)
     return require(nombre)
   }
-  vm.runInNewContext(`(function(require,module,exports){${codigo}\n})`, { Date, File, FormData, crypto })(importar, loadedModule, loadedModule.exports)
+  vm.runInNewContext(`(function(require,module,exports){${codigo}\n})`, {
+    Date, File, FormData, crypto, window: mocks.$window,
+    setTimeout: mocks.$setTimeout || setTimeout, clearTimeout,
+  })(importar, loadedModule, loadedModule.exports)
   return loadedModule.exports
 }
 
@@ -151,4 +154,44 @@ test('editar una ficha no permite reescribir el consentimiento desde el navegado
   }), /redirect/)
   assert.equal(guardado.consentimientoAt, undefined)
   assert.equal(guardado.consentimientoPor, undefined)
+})
+
+function formularioLogin(signInWithPassword, timeoutInmediato = false) {
+  const estados = []
+  let destino
+  const mocks = {
+    react: { useState: valor => {
+      const indice = estados.length
+      estados.push(indice === 0 ? { email: 'cuenta@example.test', nombre: 'Doctora', color: '#3e6fa8' } : valor)
+      return [estados[indice], nuevo => { estados[indice] = nuevo }]
+    } },
+    '@/lib/supabase/client': { createClient: () => ({ auth: { signInWithPassword } }) },
+    '@/lib/perfiles': new Proxy({}, { get() { throw new Error('El login no debe escribir perfiles') } }),
+    'next/navigation': { useRouter: () => ({ push: url => { destino = url }, refresh() {} }) },
+    ...(timeoutInmediato ? { $setTimeout: callback => { queueMicrotask(callback); return undefined } } : {}),
+  }
+  const pagina = cargar('app/login/page.tsx', mocks).default()
+  return { enviar: () => pagina.props.children.props.onSubmit({ preventDefault() {} }), estados, destino: () => destino }
+}
+
+test('el login autentica y navega sin depender de escrituras de perfil', async () => {
+  const f = formularioLogin(async () => ({ error: null }))
+  await f.enviar()
+  assert.equal(f.destino(), '/pacientes')
+  assert.equal(f.estados[3], false)
+})
+
+test('una falla de red libera el botón y muestra un error sin exponer detalles', async () => {
+  const f = formularioLogin(async () => { throw new Error('detalle interno') })
+  await f.enviar()
+  assert.match(f.estados[2], /No se pudo conectar/)
+  assert.equal(f.estados[3], false)
+  assert.equal(f.destino(), undefined)
+})
+
+test('una solicitud que no responde libera el botón al agotar el tiempo', async () => {
+  const f = formularioLogin(() => new Promise(() => {}), true)
+  await f.enviar()
+  assert.match(f.estados[2], /tardando demasiado/)
+  assert.equal(f.estados[3], false)
 })
