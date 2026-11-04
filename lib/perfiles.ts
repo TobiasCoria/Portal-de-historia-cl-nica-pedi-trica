@@ -1,14 +1,20 @@
 'use server'
 
+import { requireUser } from '@/lib/auth'
+import { PERFILES } from '@/lib/perfiles-config'
 import { prisma } from '@/lib/prisma'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
-export async function obtenerPerfil(email: string) {
-  return prisma.perfil.findUnique({ where: { email } })
-}
+
 
 export async function asegurarPerfil(email: string, nombre: string, color: string) {
+  const user = await requireUser()
+  if (email !== user.email) throw new Error('No tenés permiso para modificar este perfil.')
+  const perfil = PERFILES.find(p => p.email === user.email)
+  if (!perfil) throw new Error('Perfil no autorizado.')
+  nombre = perfil.nombre
+  color = perfil.color
   return prisma.perfil.upsert({
     where: { email },
     update: {},
@@ -17,8 +23,14 @@ export async function asegurarPerfil(email: string, nombre: string, color: strin
 }
 
 export async function subirAvatar(email: string, nombre: string, color: string, formData: FormData) {
+  const user = await requireUser()
+  if (email !== user.email) throw new Error('No tenés permiso para modificar este perfil.')
+  const perfil = PERFILES.find(p => p.email === user.email)
+  if (!perfil) throw new Error('Perfil no autorizado.')
+  nombre = perfil.nombre
+  color = perfil.color
   const archivo = formData.get('avatar') as File
-  if (!archivo || archivo.size === 0) return
+  if (!(archivo instanceof File) || archivo.size === 0 || archivo.size > 10 * 1024 * 1024 || !['image/jpeg', 'image/png'].includes(archivo.type)) throw new Error('Elegí un JPG o PNG de hasta 10 MB.')
 
   const supabase = createAdminClient()
   const path = `${email}-${Date.now()}.${archivo.name.split('.').pop()}`

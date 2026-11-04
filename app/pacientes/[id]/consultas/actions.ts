@@ -1,5 +1,9 @@
 'use server'
 
+import { consultaSchema } from '@/lib/validaciones'
+
+import { requireUser } from '@/lib/auth'
+import { requirePaciente } from '@/lib/registros'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -13,28 +17,22 @@ export async function crearConsulta(pacienteId: string, data: {
   talla?: number
   observaciones?: string
 }, turnoId?: string) {
-  const consulta = await prisma.consulta.create({
-    data: {
-      ...data,
-      pacienteId,
-    },
+  await requireUser()
+  await requirePaciente(pacienteId)
+  await prisma.$transaction(async (tx) => {
+    const consulta = await tx.consulta.create({ data: { ...data, pacienteId } })
+    if (turnoId) {
+      await tx.turno.update({ where: { id: turnoId, pacienteId, estado: 'PENDIENTE' }, data: { estado: 'ATENDIDO', consultaId: consulta.id } })
+    }
   })
 
-  if (turnoId) {
-    await prisma.turno.update({
-      where: { id: turnoId },
-      data: { estado: 'ATENDIDO', consultaId: consulta.id },
-    })
-    revalidatePath('/agenda')
-  }
-
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
   redirect(`/pacientes/${pacienteId}`)
 }
 
-export async function obtenerConsulta(id: string) {
-  return prisma.consulta.findUnique({ where: { id } })
-}
+
 
 export async function actualizarConsulta(pacienteId: string, id: string, data: {
   motivo: string
@@ -44,17 +42,25 @@ export async function actualizarConsulta(pacienteId: string, id: string, data: {
   talla?: number
   observaciones?: string
 }): Promise<{ error: string } | void> {
+  await requireUser()
+  await requirePaciente(pacienteId)
   try {
-    await prisma.consulta.update({ where: { id }, data })
+    await prisma.consulta.update({ where: { id, pacienteId, eliminadoEn: null }, data })
   } catch (error) {
     return { error: mensajeError(error) }
   }
 
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
   redirect(`/pacientes/${pacienteId}`)
 }
 
 export async function eliminarConsulta(pacienteId: string, id: string) {
-  await prisma.consulta.delete({ where: { id } })
+  await requireUser()
+  await requirePaciente(pacienteId)
+  await prisma.consulta.update({ where: { id, pacienteId, eliminadoEn: null }, data: { eliminadoEn: new Date() } })
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
 }

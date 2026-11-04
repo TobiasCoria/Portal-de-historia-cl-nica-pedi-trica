@@ -1,51 +1,21 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { obtenerPerfil, subirAvatar, asegurarPerfil } from '@/lib/perfiles'
+import { asegurarPerfil } from '@/lib/perfiles'
+import { PERFILES } from '@/lib/perfiles-config'
 
-const PERFILES = [
-  { nombre: 'Doctora', email: 'gritest123@gmail.com', color: '#3e6fa8' },
-  { nombre: 'Secretaria', email: 'secretaria@gmail.com', color: '#D6497B' },
-]
 
 type PerfilConFoto = typeof PERFILES[number] & { avatarUrl?: string | null }
 
 export default function LoginPage() {
-  const [perfiles, setPerfiles] = useState<PerfilConFoto[]>(PERFILES)
+  const perfiles: PerfilConFoto[] = [...PERFILES]
   const [seleccionado, setSeleccionado] = useState<PerfilConFoto | null>(null)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [subiendoFoto, setSubiendoFoto] = useState<string | null>(null)
-  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({})
   const router = useRouter()
-
-  useEffect(() => {
-    async function cargarFotos() {
-      const actualizados = await Promise.all(
-        PERFILES.map(async (p) => {
-          const perfil = await obtenerPerfil(p.email)
-          return { ...p, avatarUrl: perfil?.avatarUrl }
-        })
-      )
-      setPerfiles(actualizados)
-    }
-    cargarFotos()
-  }, [])
-
-  async function subirFoto(perfil: PerfilConFoto, archivo: File) {
-    setSubiendoFoto(perfil.email)
-    const formData = new FormData()
-    formData.set('avatar', archivo)
-    await subirAvatar(perfil.email, perfil.nombre, perfil.color, formData)
-    const actualizado = await obtenerPerfil(perfil.email)
-    setPerfiles((prev) =>
-      prev.map((p) => (p.email === perfil.email ? { ...p, avatarUrl: actualizado?.avatarUrl } : p))
-    )
-    setSubiendoFoto(null)
-  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -93,25 +63,6 @@ export default function LoginPage() {
                   )}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => fileInputs.current[p.email]?.click()}
-                  disabled={subiendoFoto === p.email}
-                  className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#1c2521] text-white opacity-0 transition-opacity group-hover:opacity-100"
-                  title="Cambiar foto"
-                >
-                  {subiendoFoto === p.email ? '…' : '✎'}
-                </button>
-                <input
-                  ref={(el) => { fileInputs.current[p.email] = el }}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const archivo = e.target.files?.[0]
-                    if (archivo) subirFoto(p, archivo)
-                  }}
-                />
               </div>
               <span className="text-sm font-medium text-[#1c2521]">{p.nombre}</span>
             </div>

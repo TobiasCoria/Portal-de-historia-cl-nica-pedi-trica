@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { UserPlus, Search, Pencil, Trash2, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { listarPacientes, eliminarPaciente } from './actions'
+import { eliminarPaciente } from './actions'
+import { listarPacientesFicha } from './lecturas'
 import { obtenerAgendaProxima } from '@/lib/agenda'
 import Nav from '../components/nav'
 import ConfirmarEliminar from '../components/confirmar-eliminar'
@@ -16,7 +17,7 @@ export default async function PacientesPage({
 
   const [{ data: { user } }, pacientes, agenda] = await Promise.all([
     supabase.auth.getUser(),
-    listarPacientes(q),
+    listarPacientesFicha(q),
     obtenerAgendaProxima(),
   ])
 

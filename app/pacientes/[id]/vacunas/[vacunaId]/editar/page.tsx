@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { obtenerVacuna } from '../../actions'
+import { obtenerVacuna } from '../../lecturas'
 import Nav from '@/app/components/nav'
 import Volver from '@/app/components/volver'
 import FormularioEdicionVacuna from './formulario'
@@ -10,7 +10,7 @@ export default async function EditarVacunaPage({
   params: Promise<{ id: string; vacunaId: string }>
 }) {
   const { id, vacunaId } = await params
-  const vacuna = await obtenerVacuna(vacunaId)
+  const vacuna = await obtenerVacuna(id, vacunaId)
 
   if (!vacuna) notFound()
 

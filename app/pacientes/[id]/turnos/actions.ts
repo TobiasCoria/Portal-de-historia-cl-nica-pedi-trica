@@ -1,5 +1,9 @@
 'use server'
 
+import { turnoSchema } from '@/lib/validaciones'
+
+import { requireUser } from '@/lib/auth'
+import { requirePaciente } from '@/lib/registros'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -10,6 +14,8 @@ export async function crearTurno(pacienteId: string, data: {
   motivo?: string
   observaciones?: string
 }) {
+  await requireUser()
+  await requirePaciente(pacienteId)
   await prisma.turno.create({
     data: {
       pacienteId,
@@ -19,23 +25,25 @@ export async function crearTurno(pacienteId: string, data: {
     },
   })
 
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
   revalidatePath('/agenda')
   redirect(`/pacientes/${pacienteId}`)
 }
 
-export async function obtenerTurno(id: string) {
-  return prisma.turno.findUnique({ where: { id } })
-}
+
 
 export async function actualizarTurno(pacienteId: string, id: string, data: {
   fecha: string
   motivo?: string
   observaciones?: string
 }): Promise<{ error: string } | void> {
+  await requireUser()
+  await requirePaciente(pacienteId)
   try {
     await prisma.turno.update({
-      where: { id },
+      where: { id, pacienteId, estado: 'PENDIENTE' },
       data: {
         fecha: new Date(data.fecha),
         motivo: data.motivo || null,
@@ -46,19 +54,29 @@ export async function actualizarTurno(pacienteId: string, id: string, data: {
     return { error: mensajeError(error) }
   }
 
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
   revalidatePath('/agenda')
   redirect(`/pacientes/${pacienteId}`)
 }
 
 export async function cancelarTurno(pacienteId: string, id: string) {
-  await prisma.turno.update({ where: { id }, data: { estado: 'CANCELADO' } })
+  await requireUser()
+  await requirePaciente(pacienteId)
+  await prisma.turno.update({ where: { id, pacienteId, estado: 'PENDIENTE' }, data: { estado: 'CANCELADO' } })
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
   revalidatePath('/agenda')
 }
 
 export async function eliminarTurno(pacienteId: string, id: string) {
-  await prisma.turno.delete({ where: { id } })
+  await requireUser()
+  await requirePaciente(pacienteId)
+  await prisma.turno.update({ where: { id, pacienteId, estado: 'PENDIENTE' }, data: { estado: 'CANCELADO' } })
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
   revalidatePath('/agenda')
 }

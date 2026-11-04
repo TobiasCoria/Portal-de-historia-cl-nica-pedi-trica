@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { obtenerTurno } from '../../actions'
+import { obtenerTurno } from '../../lecturas'
 import Nav from '@/app/components/nav'
 import Volver from '@/app/components/volver'
 import FormularioEdicionTurno from './formulario'
@@ -10,7 +10,7 @@ export default async function EditarTurnoPage({
   params: Promise<{ id: string; turnoId: string }>
 }) {
   const { id, turnoId } = await params
-  const turno = await obtenerTurno(turnoId)
+  const turno = await obtenerTurno(id, turnoId)
 
   if (!turno) notFound()
 

@@ -1,7 +1,8 @@
+import AvatarUploader from './avatar-uploader'
 import Link from 'next/link'
 import { Users, CalendarClock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { obtenerPerfil } from '@/lib/perfiles'
+import { obtenerPerfil } from '@/lib/perfiles-data'
 import LogoutButton from './logout-button'
 
 export default async function Nav() {
@@ -16,17 +17,7 @@ export default async function Nav() {
   return (
     <div className="mb-8 flex items-center justify-between border-b border-[#e3e7e2] pb-4">
       <div className="flex items-center gap-3">
-        <div
-          className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-sm font-medium text-white"
-          style={{ backgroundColor: color }}
-        >
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt={nombre} className="h-full w-full object-cover" />
-          ) : (
-            nombre.charAt(0)
-          )}
-        </div>
+        {user?.email && <AvatarUploader email={user.email} nombre={nombre} color={color} avatarUrl={avatarUrl} />}
         <div>
           <p className="text-sm font-medium leading-tight text-[#1c2521]">{nombre}</p>
           <p className="font-serif text-xs leading-tight text-[#5b6b64]">Portal Pediatría</p>

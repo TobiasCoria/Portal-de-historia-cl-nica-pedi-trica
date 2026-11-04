@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { obtenerPaciente } from '../../actions'
+import { obtenerPaciente } from '../../lecturas'
 import { prisma } from '@/lib/prisma'
 import Nav from '@/app/components/nav'
 import Volver from '@/app/components/volver'
@@ -17,7 +17,7 @@ export default async function EditarPacientePage({
   if (!paciente) notFound()
 
   const documentos = await prisma.documento.findMany({
-    where: { pacienteId: id, consultaId: null },
+    where: { pacienteId: id, consultaId: null, eliminadoEn: null },
     orderBy: { creadoEn: 'desc' },
   })
 

@@ -1,3 +1,4 @@
+import { requireUser } from '@/lib/auth'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Pencil, Stethoscope, Syringe, Trash2, CalendarPlus, CalendarCheck2 } from 'lucide-react'
@@ -11,13 +12,14 @@ import { eliminarVacuna } from './vacunas/actions'
 import { cancelarTurno } from './turnos/actions'
 
 async function obtenerPacienteConConsultas(id: string) {
+  await requireUser()
   return prisma.paciente.findUnique({
-    where: { id },
+    where: { id, eliminadoEn: null },
     include: {
-      consultas: { orderBy: { fecha: 'desc' }, include: { documentos: true } },
-      vacunas: { orderBy: { fechaProgramada: 'asc' } },
+      consultas: { where: { eliminadoEn: null }, orderBy: { fecha: 'desc' }, include: { documentos: { where: { eliminadoEn: null } } } },
+      vacunas: { where: { eliminadoEn: null }, orderBy: { fechaProgramada: 'asc' } },
       turnos: { orderBy: { fecha: 'asc' } },
-      documentos: { where: { consultaId: null }, orderBy: { creadoEn: 'desc' } },
+      documentos: { where: { consultaId: null, eliminadoEn: null }, orderBy: { creadoEn: 'desc' } },
     },
   })
 }
@@ -197,7 +199,7 @@ export default async function FichaPacientePage({
                         <Pencil size={13} />
                         Editar
                       </Link>
-                      <ConfirmarEliminar mensaje="¿Eliminar esta consulta? Se perderá el registro completo de lo cargado.">
+                      <ConfirmarEliminar mensaje="¿Ocultar esta consulta? El registro y sus documentos se conservan.">
                         <form action={eliminarConsulta.bind(null, id, c.id)}>
                           <button type="submit" className="action-btn-danger">
                             <Trash2 size={13} />

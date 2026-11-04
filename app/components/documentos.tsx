@@ -21,6 +21,7 @@ export default function Documentos({
   consultaId?: string
   documentos: Documento[]
 }) {
+  const [error, setError] = useState('')
   const [subiendo, setSubiendo] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
 
@@ -28,31 +29,37 @@ export default function Documentos({
     setSubiendo(true)
     formData.set('pacienteId', pacienteId)
     if (consultaId) formData.set('consultaId', consultaId)
-    await subirDocumento(formData)
-    setSubiendo(false)
+    setError('')
+    try { await subirDocumento(formData) }
+    catch { setError('No se pudo subir el archivo. Elegí un PDF, JPG o PNG de hasta 10 MB.') }
+    finally { setSubiendo(false) }
   }
 
-  async function verArchivo(path: string) {
-    const url = await obtenerUrlDocumento(path)
-    if (url) window.open(url, '_blank')
+  async function verArchivo(id: string) {
+    try {
+      const url = await obtenerUrlDocumento(id)
+      if (url) window.open(url, '_blank', 'noopener,noreferrer')
+    } catch { setError('No se pudo abrir el documento.') }
   }
 
-  async function eliminar(id: string, url: string) {
-    if (!confirm('¿Eliminar este documento? Esta acción no se puede deshacer.')) return
-    await eliminarDocumento(pacienteId, id, url)
+  async function eliminar(id: string) {
+    if (!confirm('¿Ocultar este documento? El archivo se conserva en el sistema.')) return
+    try { await eliminarDocumento(pacienteId, id) }
+    catch { setError('No se pudo ocultar el documento.') }
   }
 
   return (
     <div className="space-y-2">
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       {documentos.map((doc) => (
         <div key={doc.id} className="flex items-center justify-between rounded border border-[#e3e7e2] p-2 text-sm">
-          <button onClick={() => verArchivo(doc.url)} className="btn-link">
+          <button onClick={() => verArchivo(doc.id)} className="btn-link">
             <Paperclip size={14} />
             {doc.nombre}
           </button>
-          <button onClick={() => eliminar(doc.id, doc.url)} className="btn-link-danger">
+          <button onClick={() => eliminar(doc.id)} className="btn-link-danger">
             <Trash2 size={14} />
-            Eliminar
+            Ocultar
           </button>
         </div>
       ))}

@@ -1,5 +1,9 @@
 'use server'
 
+import { vacunaSchema, vacunaConProximaSchema } from '@/lib/validaciones'
+
+import { requireUser } from '@/lib/auth'
+import { requirePaciente } from '@/lib/registros'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -12,6 +16,8 @@ export async function crearVacuna(pacienteId: string, data: {
   fechaProgramada?: string
   observaciones?: string
 }) {
+  await requireUser()
+  await requirePaciente(pacienteId)
   await prisma.vacunaAplicada.create({
     data: {
       pacienteId,
@@ -23,6 +29,8 @@ export async function crearVacuna(pacienteId: string, data: {
     },
   })
 
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
 }
 
@@ -34,6 +42,8 @@ export async function crearVacunaConProxima(pacienteId: string, data: {
   proximaDosis?: string
   proximaFecha?: string
 }) {
+  await requireUser()
+  await requirePaciente(pacienteId)
   await prisma.vacunaAplicada.create({
     data: {
       pacienteId,
@@ -55,12 +65,12 @@ export async function crearVacunaConProxima(pacienteId: string, data: {
     })
   }
 
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
 }
 
-export async function obtenerVacuna(id: string) {
-  return prisma.vacunaAplicada.findUnique({ where: { id } })
-}
+
 
 export async function actualizarVacuna(pacienteId: string, id: string, data: {
   nombre: string
@@ -69,9 +79,11 @@ export async function actualizarVacuna(pacienteId: string, id: string, data: {
   fechaProgramada?: string
   observaciones?: string
 }): Promise<{ error: string } | void> {
+  await requireUser()
+  await requirePaciente(pacienteId)
   try {
     await prisma.vacunaAplicada.update({
-      where: { id },
+      where: { id, pacienteId, eliminadoEn: null },
       data: {
         nombre: data.nombre,
         dosis: data.dosis || null,
@@ -84,11 +96,17 @@ export async function actualizarVacuna(pacienteId: string, id: string, data: {
     return { error: mensajeError(error) }
   }
 
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
   redirect(`/pacientes/${pacienteId}`)
 }
 
 export async function eliminarVacuna(pacienteId: string, id: string) {
-  await prisma.vacunaAplicada.delete({ where: { id } })
+  await requireUser()
+  await requirePaciente(pacienteId)
+  await prisma.vacunaAplicada.update({ where: { id, pacienteId, eliminadoEn: null }, data: { eliminadoEn: new Date() } })
+  revalidatePath('/agenda')
+  revalidatePath('/pacientes')
   revalidatePath(`/pacientes/${pacienteId}`)
 }

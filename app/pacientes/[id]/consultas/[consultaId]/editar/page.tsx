@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { obtenerConsulta } from '../../actions'
+import { obtenerConsulta } from '../../lecturas'
 import Nav from '@/app/components/nav'
 import Volver from '@/app/components/volver'
 import FormularioEdicionConsulta from './formulario'
@@ -10,7 +10,7 @@ export default async function EditarConsultaPage({
   params: Promise<{ id: string; consultaId: string }>
 }) {
   const { id, consultaId } = await params
-  const consulta = await obtenerConsulta(consultaId)
+  const consulta = await obtenerConsulta(id, consultaId)
 
   if (!consulta) notFound()
 

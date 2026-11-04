@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Fraunces } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import AnimatedBackground from "./components/animated-background";
 
@@ -13,10 +14,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const fraunces = Fraunces({
+const fraunces = localFont({
   variable: "--font-fraunces",
-  subsets: ["latin"],
-  weight: ["500", "600"],
+  src: [{ path: "./fonts/fraunces-500.ttf", weight: "500" }, { path: "./fonts/fraunces-600.ttf", weight: "600" }],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
