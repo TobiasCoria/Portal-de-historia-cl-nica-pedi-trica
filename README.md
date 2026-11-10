@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portal Pediatría
 
-## Getting Started
+Portal web de pediatría. Mi aporte incluye frontend, backend y base de datos. El acceso público distingue perfiles de doctora y secretaria.
 
-First, run the development server:
+[Acceso público](https://portal-de-historia-cl-nica-pedi-tri.vercel.app/login)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Stack verificado
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+El manifiesto declara Next.js, React, TypeScript, Prisma, Supabase, React Hook Form, Zod y Tailwind CSS. Las dependencias no demuestran por sí mismas que todos los flujos estén completos o probados.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estructura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `app/`: aplicación Next.js.
+- `lib/`: utilidades y lógica compartida.
+- `prisma/`: esquema y recursos de persistencia.
+- `public/`: recursos estáticos.
+- `middleware.ts`: middleware de aplicación.
 
-## Learn More
+## Desarrollo
 
-To learn more about Next.js, take a look at the following resources:
+Instalar con `npm ci`. El script de postinstalación genera el cliente Prisma. Configurar variables privadas de acuerdo con el código y el entorno antes de ejecutar `npm run dev`. Scripts disponibles: `npm run lint`, `npm run build`, `npm start`. No se ejecutaron estos checks como parte de la revisión documental.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Privacidad
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+No incluir historias clínicas, documentos, capturas de pacientes, credenciales ni copias de bases reales. Usar datos ficticios en demostraciones. La pantalla pública no habilita acceso a información clínica sin autorización.
 
-## Deploy on Vercel
+## English
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Pediatric web portal with doctor and secretary entry roles. My contribution covers frontend, backend and databases. The package manifest declares Next.js, React, TypeScript, Prisma and Supabase. Public presentation is restricted to non-sensitive screens; no patient records are included.
