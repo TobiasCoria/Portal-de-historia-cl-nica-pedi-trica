@@ -10,6 +10,9 @@
   --paper:#fff;
   --pink:#D6497B
 }
+:root {
+  --fondo-detalles:url('/fondo-botanico.svg'),url('/fondo-botanico.svg'),radial-gradient(ellipse at 100% 0%,#dcebdc80,transparent 48%),radial-gradient(ellipse at 12% 100%,#e0ecdb70,transparent 43%);
+}
 @theme inline {
   --color-background:var(--background);
   --color-foreground:var(--foreground);
@@ -1894,3 +1897,12 @@ form[aria-busy="true"] button[type="submit"]:disabled:after {
 @media(max-width:950px){.acceso-layout{display:block}.acceso-sidebar{padding:24px 30px;gap:0}.acceso-sidebar .brand{max-width:230px}.acceso-mensaje,.acceso-firma{display:none}.acceso-topbar{min-height:74px}.acceso-contenido{padding:50px 0;max-width:780px;gap:30px}.acceso-bienvenida h1{font-size:35px}}
 @media(max-width:650px){.acceso-sidebar{padding:20px 24px}.acceso-main{padding:0 22px}.acceso-topbar{min-height:65px;font-size:11px}.acceso-topbar .badge{font-size:9px}.acceso-contenido{grid-template-columns:1fr;gap:26px;padding:32px 0;max-width:440px}.acceso-bienvenida h1{font-size:34px}.acceso-bienvenida h1 br{display:none}.acceso-bienvenida .page-description{font-size:12px;margin-top:12px}.acceso-bienvenida .page-description br{display:none}.acceso-recorrido{display:none}.acceso-card{padding:24px;width:100%}.acceso-card h2{font-size:27px}.acceso-card-heading{margin-bottom:18px}.acceso-perfil{padding:15px 12px}.acceso-perfil-texto small{font-size:9px}.acceso-pie{font-size:9px;padding:21px 0}}
 @media(prefers-reduced-motion:reduce){.acceso-flecha{transition:none}.acceso-perfil:hover .acceso-flecha{transform:none}}
+/* Detalles de fondo estáticos: sin capas sobre los controles ni movimiento extra. */
+body,.acceso-layout,.login-form-area {
+  background-image:var(--fondo-detalles);
+  background-repeat:no-repeat;
+  background-position:right 26px top 120px,left 300px bottom 32px,center,center;
+  background-size:150px 150px,105px 105px,100% 100%,100% 100%;
+}
+@media(max-width:950px){body,.acceso-layout,.login-form-area{background-position:right 12px top 145px,left 10px bottom 20px,center,center;background-size:110px 110px,80px 80px,100% 100%,100% 100%}}
+@media print{body,.acceso-layout,.login-form-area{background-image:none}}

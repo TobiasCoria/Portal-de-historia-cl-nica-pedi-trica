@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
-  const publicas = ['/login', '/recuperar-clave', '/actualizar-clave', '/auth/callback']
+  const publicas = ['/login', '/recuperar-clave', '/actualizar-clave', '/auth/callback', '/fondo-botanico.svg']
   if (publicas.includes(request.nextUrl.pathname)) return response
 
   const supabase = createServerClient(

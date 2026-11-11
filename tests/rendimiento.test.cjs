@@ -70,8 +70,10 @@ test('el resumen de pendientes limita las filas y conserva el total real', async
 test('el proxy no llama a Supabase para renderizar el ingreso público', async () => {
   let invocado = false
   const { proxy } = cargar('proxy.ts', { '@supabase/ssr': { createServerClient: () => { invocado = true; throw new Error('No debería ejecutarse') } } })
-  const r = await proxy(new NextRequest('http://localhost/login'))
-  assert.equal(r.status, 200)
+  for (const ruta of ['/login', '/fondo-botanico.svg']) {
+    const r = await proxy(new NextRequest(`http://localhost${ruta}`))
+    assert.equal(r.status, 200)
+  }
   assert.equal(invocado, false)
 })
 
